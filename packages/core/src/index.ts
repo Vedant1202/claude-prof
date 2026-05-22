@@ -66,3 +66,8 @@ export {
   type BundledAsset,
   type SkippedAsset,
 } from "./bundler.js";
+export {
+  createProfileGitignore,
+  createScanReport,
+  type ScanReportInput,
+} from "./report.js";
