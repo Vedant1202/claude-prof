@@ -35,6 +35,9 @@ importers:
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
+      ignore:
+        specifier: ^7.0.5
+        version: 7.0.5
 
   packages/schema: {}
 
@@ -440,6 +443,10 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  ignore@7.0.5:
+    resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
+    engines: {node: '>= 4'}
 
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
@@ -905,6 +912,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  ignore@7.0.5: {}
 
   js-tokens@9.0.1: {}
 

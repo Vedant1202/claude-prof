@@ -17,3 +17,9 @@ export {
   type ProfileValidationResult,
   type ValidationExitCode,
 } from "./validate.js";
+export {
+  createIgnorePolicy,
+  loadCprofIgnore,
+  normalizeIgnorePath,
+  type IgnorePolicy,
+} from "./ignore.js";
