@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@cprof/schema": "workspace:*"
+    "@cprof/schema": "workspace:*",
+    "ajv": "^8.20.0"
   }
 }

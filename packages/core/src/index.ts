@@ -10,3 +10,10 @@ export interface SourceDescriptor {
 export function createSourceDescriptor(scope: ScanScope): SourceDescriptor {
   return { scope };
 }
+
+export {
+  validateProfile,
+  validateProfileFile,
+  type ProfileValidationResult,
+  type ValidationExitCode,
+} from "./validate.js";
