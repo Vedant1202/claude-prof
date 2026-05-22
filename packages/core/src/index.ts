@@ -58,3 +58,11 @@ export {
   type BuildManifestInput,
   type ManifestSectionMap,
 } from "./manifest.js";
+export {
+  bundleAssets,
+  type AssetBundleInput,
+  type AssetBundleResult,
+  type AssetKind,
+  type BundledAsset,
+  type SkippedAsset,
+} from "./bundler.js";
