@@ -53,3 +53,8 @@ export {
   type ProfileSourceMetadata,
   type SourceDiscoveryOptions,
 } from "./sources.js";
+export {
+  buildManifest,
+  type BuildManifestInput,
+  type ManifestSectionMap,
+} from "./manifest.js";

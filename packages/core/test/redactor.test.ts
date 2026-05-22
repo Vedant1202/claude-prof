@@ -18,10 +18,12 @@ describe("shouldRedactString", () => {
   });
 
   it("redacts JWT-shaped values", () => {
+    const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature123";
+
     expect(
-      shouldRedactString("abc123.def456.ghi789", ["authorization"]),
+      shouldRedactString(jwt, ["authorization"]),
     ).toBe("key-name");
-    expect(shouldRedactString("abc123.def456.ghi789", ["value"])).toBe("jwt");
+    expect(shouldRedactString(jwt, ["value"])).toBe("jwt");
   });
 
   it("does not redact env placeholders", () => {

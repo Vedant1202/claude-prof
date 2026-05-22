@@ -36,7 +36,8 @@ const KNOWN_SECRET_PATTERNS = [
 ] as const;
 
 const ENV_PLACEHOLDER_PATTERN = /^\$\{env:[A-Za-z_][A-Za-z0-9_]*}$/;
-const JWT_PATTERN = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const JWT_PATTERN =
+  /^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$/;
 
 export function redactSecrets(value: unknown): RedactionResult {
   const redactions: Redaction[] = [];
@@ -56,7 +57,11 @@ export function shouldRedactString(
   value: string,
   keyPath: readonly string[],
 ): RedactionReason | undefined {
-  if (value.length === 0 || ENV_PLACEHOLDER_PATTERN.test(value)) {
+  if (
+    value.length === 0 ||
+    ENV_PLACEHOLDER_PATTERN.test(value) ||
+    isStructuralManifestPath(keyPath)
+  ) {
     return undefined;
   }
 
@@ -150,7 +155,7 @@ function formatPath(path: readonly string[]): string {
 }
 
 function isHighEntropy(value: string): boolean {
-  if (value.length < 32 || /\s/.test(value)) {
+  if (value.length < 32 || /\s/.test(value) || value.includes("://")) {
     return false;
   }
 
@@ -166,4 +171,10 @@ function isHighEntropy(value: string): boolean {
 
 function countOccurrences(value: string, character: string): number {
   return [...value].filter((candidate) => candidate === character).length;
+}
+
+function isStructuralManifestPath(keyPath: readonly string[]): boolean {
+  const path = keyPath.join("/");
+
+  return ["$schema", "version", "claudeCode"].includes(path);
 }
