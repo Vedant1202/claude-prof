@@ -1,0 +1,19 @@
+{
+  "name": "cprof-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "build": "corepack pnpm -r build",
+    "test": "corepack pnpm -r test",
+    "lint": "tsc -b --pretty false",
+    "format": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

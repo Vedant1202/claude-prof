@@ -1,0 +1,32 @@
+.DS_Store
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment and local logs
+.env
+.env.*
+*.log
+
+# Claude runtime secrets and generated state
+.claude/.credentials.json
+.claude/statsig/
+.claude/cache/
+.claude/backups/
+.claude/file-history/
+.claude/paste-cache/
+.claude/shell-snapshots/
+.claude/clipboard/
+.claude/sessions/
+.claude/transcripts/
+.claude/history.jsonl
+.claude/.simplify-ignore-cache/
+.claude/sdd-cache/
+
+# Local dependency/source checkouts used while assembling profiles
+agent-skills/
+
+skills/
+referecences/
+.plans

@@ -1,0 +1,21 @@
+{
+  "name": "cprof",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "cprof": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cprof/core": "workspace:*"
+  }
+}
