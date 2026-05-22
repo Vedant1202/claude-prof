@@ -40,3 +40,9 @@ export {
   type RedactionReason,
   type RedactionResult,
 } from "./redactor.js";
+export {
+  checkGeneratedOutputForLeaks,
+  type GeneratedOutput,
+  type LeakCheckResult,
+  type OutputLeak,
+} from "./leak-check.js";
