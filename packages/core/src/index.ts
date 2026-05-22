@@ -46,3 +46,10 @@ export {
   type LeakCheckResult,
   type OutputLeak,
 } from "./leak-check.js";
+export {
+  CANONICAL_GLOBAL_PATHS,
+  CANONICAL_PROJECT_PATHS,
+  createProfileSourceMetadata,
+  type ProfileSourceMetadata,
+  type SourceDiscoveryOptions,
+} from "./sources.js";
