@@ -23,3 +23,12 @@ export {
   normalizeIgnorePath,
   type IgnorePolicy,
 } from "./ignore.js";
+export {
+  BUILT_IN_NEVER_READ_PATTERNS,
+  collectSafePaths,
+  isInsideRoot,
+  type SafeTraversalEntry,
+  type SafeTraversalResult,
+  type SkippedPath,
+  type SkipReason,
+} from "./traversal.js";
