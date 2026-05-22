@@ -32,3 +32,11 @@ export {
   type SkippedPath,
   type SkipReason,
 } from "./traversal.js";
+export {
+  redactSecrets,
+  shouldRedactString,
+  type RedactedProfileValue,
+  type Redaction,
+  type RedactionReason,
+  type RedactionResult,
+} from "./redactor.js";
