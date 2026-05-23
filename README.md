@@ -25,6 +25,9 @@ node packages/cli/dist/index.js install claude-profile.json --dry-run
 node packages/cli/dist/index.js install claude-profile.json
 node packages/cli/dist/index.js install https://example.com/claude-profile.json --dry-run
 node packages/cli/dist/index.js install github:owner/repo --dry-run
+node packages/cli/dist/index.js registry list registry.json
+node packages/cli/dist/index.js registry search registry.json typescript
+node packages/cli/dist/index.js registry show registry.json owner/profile
 node packages/cli/dist/index.js validate claude-profile.json
 node packages/cli/dist/index.js diff a.json b.json
 ```
@@ -40,10 +43,13 @@ node packages/cli/dist/index.js diff a.json b.json
 - `cprof install <file> --include-global`: applies project and global content from a mixed profile.
 - `cprof install <https-url>`: fetches and applies a remote profile JSON.
 - `cprof install github:owner/repo`: fetches `claude-profile.json` from a GitHub repo's `main` branch.
+- `cprof registry list <index>`: lists profiles from a local registry index.
+- `cprof registry search <index> <query>`: searches registry metadata.
+- `cprof registry show <index> <id>`: shows one registry entry.
 - `cprof validate <file>`: validates a profile against the schema.
 - `cprof diff <a.json> <b.json>`: compares two profiles semantically.
 
-See [docs/phase-1.md](docs/phase-1.md) for snapshot behavior, [docs/phase-2.md](docs/phase-2.md) for local install behavior, [docs/phase-3.md](docs/phase-3.md) for remote references, and [docs/cprofignore.md](docs/cprofignore.md) for ignore rules.
+See [docs/phase-1.md](docs/phase-1.md) for snapshot behavior, [docs/phase-2.md](docs/phase-2.md) for local install behavior, [docs/phase-3.md](docs/phase-3.md) for remote references, [docs/phase-4.md](docs/phase-4.md) for registry discovery, and [docs/cprofignore.md](docs/cprofignore.md) for ignore rules.
 
 ## Packages
 

@@ -4,6 +4,7 @@ import { runDiff } from "./commands/diff.js";
 import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
 import { runRefresh } from "./commands/refresh.js";
+import { runRegistry } from "./commands/registry.js";
 import { runValidate } from "./commands/validate.js";
 import type { ProfileReferenceFetcher } from "@cprof/core";
 
@@ -63,6 +64,14 @@ export async function main(
 
   if (command === "validate") {
     return runValidate(flags, {
+      cwd: options.cwd ?? process.cwd(),
+      stdout,
+      stderr,
+    });
+  }
+
+  if (command === "registry") {
+    return runRegistry(flags, {
       cwd: options.cwd ?? process.cwd(),
       stdout,
       stderr,
