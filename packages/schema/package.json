@@ -8,9 +8,15 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "src/schema.json"],
+  "files": [
+    "dist",
+    "src/schema.json"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

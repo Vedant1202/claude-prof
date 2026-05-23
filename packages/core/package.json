@@ -16,5 +16,8 @@
     "@cprof/schema": "workspace:*",
     "ajv": "^8.20.0",
     "ignore": "^7.0.5"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

@@ -17,5 +17,8 @@
   },
   "dependencies": {
     "@cprof/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

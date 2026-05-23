@@ -26,6 +26,10 @@ importers:
       '@cprof/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.12.4)
 
   packages/core:
     dependencies:
@@ -38,14 +42,26 @@ importers:
       ignore:
         specifier: ^7.0.5
         version: 7.0.5
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.12.4)
 
-  packages/schema: {}
+  packages/schema:
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.12.4)
 
   packages/testing:
     dependencies:
       '@cprof/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.12.4)
 
 packages:
 
