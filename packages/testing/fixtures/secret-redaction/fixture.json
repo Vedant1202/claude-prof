@@ -1,0 +1,6 @@
+{
+  "name": "secret-redaction",
+  "kind": "secret-redaction",
+  "description": "Fixture with placeholder secret-like keys but no real or pattern-shaped credentials.",
+  "expectedValid": true
+}

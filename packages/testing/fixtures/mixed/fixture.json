@@ -1,0 +1,6 @@
+{
+  "name": "mixed",
+  "kind": "mixed",
+  "description": "Project fixture intended for init --include-global coverage.",
+  "expectedValid": true
+}

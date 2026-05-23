@@ -1,0 +1,6 @@
+{
+  "name": "malformed-profile",
+  "kind": "malformed-profile",
+  "description": "Fixture with an invalid profile for validator failure coverage.",
+  "expectedValid": false
+}

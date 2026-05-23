@@ -1,0 +1,6 @@
+{
+  "name": "symlink-escape",
+  "kind": "symlink-escape",
+  "description": "Descriptor for symlink escape tests generated dynamically in test code.",
+  "expectedValid": true
+}

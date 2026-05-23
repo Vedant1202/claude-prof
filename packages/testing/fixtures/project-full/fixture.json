@@ -1,0 +1,6 @@
+{
+  "name": "project-full",
+  "kind": "project-full",
+  "description": "Project fixture with skills, commands, agents, rules, MCP, and hook inventory.",
+  "expectedValid": true
+}

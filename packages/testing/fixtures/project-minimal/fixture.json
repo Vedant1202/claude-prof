@@ -1,0 +1,6 @@
+{
+  "name": "project-minimal",
+  "kind": "project-minimal",
+  "description": "Minimal project profile with only project instructions.",
+  "expectedValid": true
+}

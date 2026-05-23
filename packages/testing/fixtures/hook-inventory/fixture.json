@@ -1,0 +1,6 @@
+{
+  "name": "hook-inventory",
+  "kind": "hook-inventory",
+  "description": "Fixture with hook metadata for inventory-only behavior.",
+  "expectedValid": true
+}

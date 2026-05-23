@@ -1,0 +1,6 @@
+{
+  "name": "global-only",
+  "kind": "global-only",
+  "description": "Global profile fixture with global memory and user-scoped MCP metadata.",
+  "expectedValid": true
+}

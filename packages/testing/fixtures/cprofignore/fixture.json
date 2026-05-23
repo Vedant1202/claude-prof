@@ -1,0 +1,6 @@
+{
+  "name": "cprofignore",
+  "kind": "cprofignore",
+  "description": "Project fixture with explicit cprof ignore rules.",
+  "expectedValid": true
+}

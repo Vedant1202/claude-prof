@@ -1,0 +1,6 @@
+{
+  "name": "forbidden-paths",
+  "kind": "forbidden-paths",
+  "description": "Fixture containing built-in never-read runtime paths.",
+  "expectedValid": true
+}
