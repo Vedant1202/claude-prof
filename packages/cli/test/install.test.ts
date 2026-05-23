@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildManifest, createProfileSourceMetadata } from "@cprof/core";
+import type { ProfileReferenceFetcher } from "@cprof/core";
 import { main } from "../src/index.js";
 
 let tempDir: string;
@@ -232,6 +233,81 @@ describe("cprof install", () => {
       code: "ENOENT",
     });
   });
+
+  it("installs a remote HTTPS profile reference", async () => {
+    const profile = buildManifest({
+      name: "remote",
+      version: "1.0.0",
+      sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+      settings: { model: "sonnet" },
+    });
+    const fetcher = createFetcher(
+      "https://example.com/claude-profile.json",
+      `${JSON.stringify(profile)}\n`,
+    );
+
+    await expect(
+      main(["install", "https://example.com/claude-profile.json"], {
+        cwd: targetDir,
+        homeDir,
+        remoteCacheRoot: tempDir,
+        fetcher,
+      }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(targetDir, ".claude", "settings.json"), "utf8"),
+    ).resolves.toContain("sonnet");
+  });
+
+  it("installs a GitHub shorthand profile reference", async () => {
+    const profile = buildManifest({
+      name: "remote-github",
+      version: "1.0.0",
+      sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+      settings: { model: "opus" },
+    });
+    const fetcher = createFetcher(
+      "https://raw.githubusercontent.com/owner/repo/main/claude-profile.json",
+      `${JSON.stringify(profile)}\n`,
+    );
+
+    await expect(
+      main(["install", "github:owner/repo"], {
+        cwd: targetDir,
+        homeDir,
+        remoteCacheRoot: tempDir,
+        fetcher,
+      }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(targetDir, ".claude", "settings.json"), "utf8"),
+    ).resolves.toContain("opus");
+  });
+
+  it("returns 2 for missing remote profile references", async () => {
+    const stderr = createWritable();
+
+    await expect(
+      main(["install", "https://example.com/missing.json"], {
+        cwd: targetDir,
+        homeDir,
+        remoteCacheRoot: tempDir,
+        stderr,
+        fetcher: async () => ({
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+          async text() {
+            return "";
+          },
+        }),
+      }),
+    ).resolves.toBe(2);
+
+    expect(stderr.output).toContain("failed to fetch remote profile");
+  });
 });
 
 async function writeAsset(path: string, contents: string): Promise<void> {
@@ -261,5 +337,23 @@ function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
       output += String(chunk);
       return true;
     },
+  };
+}
+
+function createFetcher(
+  expectedUrl: string,
+  contents: string,
+): ProfileReferenceFetcher {
+  return async (url) => {
+    expect(url).toBe(expectedUrl);
+
+    return {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      async text() {
+        return contents;
+      },
+    };
   };
 }

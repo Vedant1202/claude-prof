@@ -23,6 +23,8 @@ node packages/cli/dist/index.js init --include-global
 node packages/cli/dist/index.js refresh
 node packages/cli/dist/index.js install claude-profile.json --dry-run
 node packages/cli/dist/index.js install claude-profile.json
+node packages/cli/dist/index.js install https://example.com/claude-profile.json --dry-run
+node packages/cli/dist/index.js install github:owner/repo --dry-run
 node packages/cli/dist/index.js validate claude-profile.json
 node packages/cli/dist/index.js diff a.json b.json
 ```
@@ -36,10 +38,12 @@ node packages/cli/dist/index.js diff a.json b.json
 - `cprof install <file>`: applies a trusted local profile to the current project.
 - `cprof install <file> --global`: applies global-scoped content to `~/.claude`.
 - `cprof install <file> --include-global`: applies project and global content from a mixed profile.
+- `cprof install <https-url>`: fetches and applies a remote profile JSON.
+- `cprof install github:owner/repo`: fetches `claude-profile.json` from a GitHub repo's `main` branch.
 - `cprof validate <file>`: validates a profile against the schema.
 - `cprof diff <a.json> <b.json>`: compares two profiles semantically.
 
-See [docs/phase-1.md](docs/phase-1.md) for snapshot behavior, [docs/phase-2.md](docs/phase-2.md) for install behavior, and [docs/cprofignore.md](docs/cprofignore.md) for ignore rules.
+See [docs/phase-1.md](docs/phase-1.md) for snapshot behavior, [docs/phase-2.md](docs/phase-2.md) for local install behavior, [docs/phase-3.md](docs/phase-3.md) for remote references, and [docs/cprofignore.md](docs/cprofignore.md) for ignore rules.
 
 ## Packages
 
