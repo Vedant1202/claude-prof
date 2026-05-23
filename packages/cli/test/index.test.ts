@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { validateProfile } from "@cprof/core";
 import { main } from "../src/index.js";
+import { createWritable, readProfileJson } from "./helpers.js";
 
 let tempDir: string;
 
@@ -32,7 +33,7 @@ describe("cprof cli", () => {
 
     await expect(main(["init"], { cwd })).resolves.toBe(0);
 
-    const profile = await readProfile(cwd);
+    const profile = await readProfileJson(cwd);
     expect(validateProfile(profile)).toMatchObject({ valid: true });
     expect(profile).toMatchObject({
       profileScope: "project",
@@ -57,7 +58,7 @@ describe("cprof cli", () => {
       main(["init", "--global"], { cwd: tempDir, homeDir }),
     ).resolves.toBe(0);
 
-    const profile = await readProfile(tempDir);
+    const profile = await readProfileJson(tempDir);
     expect(validateProfile(profile)).toMatchObject({ valid: true });
     expect(profile).toMatchObject({
       profileScope: "global",
@@ -85,7 +86,7 @@ describe("cprof cli", () => {
       main(["init", "--include-global"], { cwd: tempDir, homeDir }),
     ).resolves.toBe(0);
 
-    const profile = await readProfile(tempDir);
+    const profile = await readProfileJson(tempDir);
     expect(validateProfile(profile)).toMatchObject({ valid: true });
     expect(profile).toMatchObject({
       profileScope: "project",
@@ -114,10 +115,6 @@ describe("cprof cli", () => {
   });
 });
 
-async function readProfile(cwd: string): Promise<Record<string, unknown>> {
-  return JSON.parse(await readFile(join(cwd, "claude-profile.json"), "utf8"));
-}
-
 async function createHomeWithInstalledPlugin(): Promise<string> {
   const homeDir = join(tempDir, "home");
   const pluginDir = join(homeDir, ".claude", "plugins");
@@ -145,20 +142,4 @@ async function createHomeWithInstalledPlugin(): Promise<string> {
   );
 
   return homeDir;
-}
-
-function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
-  readonly output: string;
-} {
-  let output = "";
-
-  return {
-    get output() {
-      return output;
-    },
-    write(chunk: string | Uint8Array): boolean {
-      output += String(chunk);
-      return true;
-    },
-  };
 }

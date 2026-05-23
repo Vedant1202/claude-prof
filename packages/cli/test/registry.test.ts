@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { main } from "../src/index.js";
+import { createWritable } from "./helpers.js";
 
 let tempDir: string;
 
@@ -98,9 +99,9 @@ describe("cprof registry", () => {
 
     await main(["registry", "list", "registry.json"], { cwd: tempDir });
 
-    await expect(readFile(join(tempDir, "registry.json"), "utf8")).resolves.toBe(
-      before,
-    );
+    await expect(
+      readFile(join(tempDir, "registry.json"), "utf8"),
+    ).resolves.toBe(before);
   });
 });
 
@@ -130,20 +131,4 @@ async function writeRegistry(): Promise<void> {
     )}\n`,
     "utf8",
   );
-}
-
-function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
-  readonly output: string;
-} {
-  let output = "";
-
-  return {
-    get output() {
-      return output;
-    },
-    write(chunk: string | Uint8Array): boolean {
-      output += String(chunk);
-      return true;
-    },
-  };
 }

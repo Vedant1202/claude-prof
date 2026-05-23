@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildManifest, createProfileSourceMetadata } from "@cprof/core";
 import type { ProfileReferenceFetcher } from "@cprof/core";
 import { main } from "../src/index.js";
+import { createWritable } from "./helpers.js";
 
 let tempDir: string;
 let profileDir: string;
@@ -62,7 +63,10 @@ describe("cprof install", () => {
     expect(stdout.output).toContain("Mode: dry-run");
     expect(stdout.output).toContain("Planned 1 writes");
     await expect(
-      readFile(join(targetDir, ".claude", "skills", "review", "SKILL.md"), "utf8"),
+      readFile(
+        join(targetDir, ".claude", "skills", "review", "SKILL.md"),
+        "utf8",
+      ),
     ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
@@ -229,7 +233,9 @@ describe("cprof install", () => {
         env: {},
       }),
     ).resolves.toBe(1);
-    await expect(readFile(join(targetDir, ".mcp.json"), "utf8")).rejects.toMatchObject({
+    await expect(
+      readFile(join(targetDir, ".mcp.json"), "utf8"),
+    ).rejects.toMatchObject({
       code: "ENOENT",
     });
   });
@@ -322,22 +328,6 @@ async function writeProfile(profile: unknown): Promise<void> {
     `${JSON.stringify(profile, null, 2)}\n`,
     "utf8",
   );
-}
-
-function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
-  readonly output: string;
-} {
-  let output = "";
-
-  return {
-    get output() {
-      return output;
-    },
-    write(chunk: string | Uint8Array): boolean {
-      output += String(chunk);
-      return true;
-    },
-  };
 }
 
 function createFetcher(

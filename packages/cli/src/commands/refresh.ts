@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -8,13 +8,14 @@ import {
   scanClaudeProfile,
   validateProfile,
 } from "@cprof/core";
-import type { CprofProfile } from "@cprof/schema";
+
+import { readProfileFile, type CommandWriter } from "../command-utils.js";
 
 export interface RefreshCommandOptions {
   readonly cwd: string;
   readonly homeDir?: string;
-  readonly stdout: Pick<NodeJS.WriteStream, "write">;
-  readonly stderr: Pick<NodeJS.WriteStream, "write">;
+  readonly stdout: CommandWriter;
+  readonly stderr: CommandWriter;
 }
 
 export async function runRefresh(
@@ -27,16 +28,11 @@ export async function runRefresh(
   }
 
   const profilePath = join(options.cwd, "claude-profile.json");
-  const existing = await readProfile(profilePath);
+  const existing = await readProfileFile(profilePath);
 
-  if (existing.category === "not-found") {
-    options.stderr.write(`file not found: ${profilePath}\n`);
-    return 2;
-  }
-
-  if (existing.category === "invalid") {
-    options.stderr.write(`${existing.error}\n`);
-    return 1;
+  if (!existing.ok) {
+    options.stderr.write(`${existing.errors.join("\n")}\n`);
+    return existing.exitCode;
   }
 
   const scan = await scanClaudeProfile({
@@ -79,46 +75,4 @@ export async function runRefresh(
 
   options.stdout.write("Refreshed claude-profile.json\n");
   return 0;
-}
-
-type ReadProfileResult =
-  | { readonly category: "ok"; readonly profile: CprofProfile }
-  | { readonly category: "not-found" }
-  | { readonly category: "invalid"; readonly error: string };
-
-async function readProfile(filePath: string): Promise<ReadProfileResult> {
-  let contents: string;
-
-  try {
-    contents = await readFile(filePath, "utf8");
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") {
-      return { category: "not-found" };
-    }
-
-    throw error;
-  }
-
-  try {
-    const value = JSON.parse(contents) as unknown;
-    const validation = validateProfile(value);
-
-    if (!validation.valid) {
-      return {
-        category: "invalid",
-        error: validation.errors.join("\n"),
-      };
-    }
-
-    return { category: "ok", profile: value as CprofProfile };
-  } catch (error) {
-    return {
-      category: "invalid",
-      error: error instanceof Error ? error.message : "profile JSON is invalid",
-    };
-  }
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error;
 }

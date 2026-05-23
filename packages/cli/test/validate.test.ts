@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildManifest, createProfileSourceMetadata } from "@cprof/core";
 import { main } from "../src/index.js";
+import { createWritable } from "./helpers.js";
 
 let tempDir: string;
 
@@ -72,26 +73,13 @@ describe("cprof validate", () => {
       main(["validate", "--json", "valid.json"], { cwd: tempDir, stdout }),
     ).resolves.toBe(0);
 
-    expect(JSON.parse(stdout.output)).toMatchObject({ valid: true, exitCode: 0 });
+    expect(JSON.parse(stdout.output)).toMatchObject({
+      valid: true,
+      exitCode: 0,
+    });
   });
 });
 
 async function writeProfile(name: string, value: unknown): Promise<void> {
   await writeFile(join(tempDir, name), `${JSON.stringify(value)}\n`, "utf8");
-}
-
-function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
-  readonly output: string;
-} {
-  let output = "";
-
-  return {
-    get output() {
-      return output;
-    },
-    write(chunk: string | Uint8Array): boolean {
-      output += String(chunk);
-      return true;
-    },
-  };
 }

@@ -1,18 +1,17 @@
-import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import {
   checkProfilePolicy,
   loadTeamPolicy,
-  validateProfile,
   type PolicyCheckResult,
 } from "@cprof/core";
-import type { CprofProfile } from "@cprof/schema";
+
+import { readProfileFile, type CommandWriter } from "../command-utils.js";
 
 export interface PolicyCommandOptions {
   readonly cwd: string;
-  readonly stdout: Pick<NodeJS.WriteStream, "write">;
-  readonly stderr: Pick<NodeJS.WriteStream, "write">;
+  readonly stdout: CommandWriter;
+  readonly stderr: CommandWriter;
 }
 
 interface ParsedPolicyFlags {
@@ -33,7 +32,9 @@ export async function runPolicy(
     return 1;
   }
 
-  const profile = await readProfile(resolve(options.cwd, parsed.profilePath));
+  const profile = await readProfileFile(
+    resolve(options.cwd, parsed.profilePath),
+  );
 
   if (!profile.ok) {
     options.stderr.write(`${profile.errors.join("\n")}\n`);
@@ -81,7 +82,10 @@ function parsePolicyFlags(flags: readonly string[]): ParsePolicyResult {
   const [profilePath, policyPath, extra] = positional;
 
   if (profilePath === undefined || policyPath === undefined) {
-    return { valid: false, error: "policy check requires profile and policy paths" };
+    return {
+      valid: false,
+      error: "policy check requires profile and policy paths",
+    };
   }
 
   if (extra !== undefined) {
@@ -89,42 +93,6 @@ function parsePolicyFlags(flags: readonly string[]): ParsePolicyResult {
   }
 
   return { valid: true, profilePath, policyPath, json };
-}
-
-async function readProfile(
-  path: string,
-): Promise<
-  | { readonly ok: true; readonly profile: CprofProfile }
-  | { readonly ok: false; readonly exitCode: 1 | 2; readonly errors: readonly string[] }
-> {
-  let contents: string;
-
-  try {
-    contents = await readFile(path, "utf8");
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") {
-      return { ok: false, exitCode: 2, errors: [`file not found: ${path}`] };
-    }
-
-    throw error;
-  }
-
-  try {
-    const value = JSON.parse(contents) as unknown;
-    const validation = validateProfile(value);
-
-    if (!validation.valid) {
-      return { ok: false, exitCode: 1, errors: validation.errors };
-    }
-
-    return { ok: true, profile: value as CprofProfile };
-  } catch (error) {
-    return {
-      ok: false,
-      exitCode: 1,
-      errors: [error instanceof Error ? error.message : "profile JSON is invalid"],
-    };
-  }
 }
 
 function formatPolicyResult(result: PolicyCheckResult, json: boolean): string {
@@ -142,8 +110,4 @@ function formatPolicyResult(result: PolicyCheckResult, json: boolean): string {
       (violation) => `- ${violation.path}: ${violation.message}`,
     ),
   ].join("\n")}\n`;
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error;
 }

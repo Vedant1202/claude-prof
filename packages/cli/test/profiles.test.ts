@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildManifest, createProfileSourceMetadata } from "@cprof/core";
 import { main } from "../src/index.js";
+import { createWritable } from "./helpers.js";
 
 let tempDir: string;
 let profileDir: string;
@@ -48,9 +49,9 @@ describe("cprof profiles", () => {
 
     expect(stdout.output).toContain("Team Base 1.0.0");
     expect(stdout.output).toContain(join(profileDir, "claude-profile.json"));
-    await expect(readFile(join(targetDir, ".cprof-state.json"), "utf8")).resolves.toContain(
-      "Team Base",
-    );
+    await expect(
+      readFile(join(targetDir, ".cprof-state.json"), "utf8"),
+    ).resolves.toContain("Team Base");
   });
 
   it("checks outdated profiles against a registry", async () => {
@@ -101,14 +102,21 @@ describe("cprof profiles", () => {
       }),
     );
 
-    await main(["install", join(profileDir, "claude-profile.json"), "--global"], {
-      cwd: targetDir,
-      homeDir,
-    });
+    await main(
+      ["install", join(profileDir, "claude-profile.json"), "--global"],
+      {
+        cwd: targetDir,
+        homeDir,
+      },
+    );
     const stdout = createWritable();
 
     await expect(
-      main(["profiles", "list", "--global"], { cwd: targetDir, homeDir, stdout }),
+      main(["profiles", "list", "--global"], {
+        cwd: targetDir,
+        homeDir,
+        stdout,
+      }),
     ).resolves.toBe(0);
 
     expect(stdout.output).toContain("Global Base 1.0.0");
@@ -153,20 +161,4 @@ async function writeRegistry(): Promise<void> {
     )}\n`,
     "utf8",
   );
-}
-
-function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
-  readonly output: string;
-} {
-  let output = "";
-
-  return {
-    get output() {
-      return output;
-    },
-    write(chunk: string | Uint8Array): boolean {
-      output += String(chunk);
-      return true;
-    },
-  };
 }

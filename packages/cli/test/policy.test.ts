@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildManifest, createProfileSourceMetadata } from "@cprof/core";
 import { main } from "../src/index.js";
+import { createWritable } from "./helpers.js";
 
 let tempDir: string;
 
@@ -28,7 +29,11 @@ describe("cprof policy", () => {
         settings: { model: "sonnet" },
       }),
     );
-    await writePolicy({ version: 1, allowedSections: ["settings"], maxSecrets: 0 });
+    await writePolicy({
+      version: 1,
+      allowedSections: ["settings"],
+      maxSecrets: 0,
+    });
 
     await expect(
       main(["policy", "check", "claude-profile.json", "policy.json"], {
@@ -87,10 +92,13 @@ describe("cprof policy", () => {
     await writePolicy({ version: 1, blockedSections: ["hooks"] });
 
     await expect(
-      main(["policy", "check", "claude-profile.json", "policy.json", "--json"], {
-        cwd: tempDir,
-        stderr,
-      }),
+      main(
+        ["policy", "check", "claude-profile.json", "policy.json", "--json"],
+        {
+          cwd: tempDir,
+          stderr,
+        },
+      ),
     ).resolves.toBe(1);
 
     expect(JSON.parse(stderr.output)).toMatchObject({ ok: false });
@@ -131,20 +139,4 @@ async function writePolicy(value: unknown): Promise<void> {
     `${JSON.stringify(value, null, 2)}\n`,
     "utf8",
   );
-}
-
-function createWritable(): Pick<NodeJS.WriteStream, "write"> & {
-  readonly output: string;
-} {
-  let output = "";
-
-  return {
-    get output() {
-      return output;
-    },
-    write(chunk: string | Uint8Array): boolean {
-      output += String(chunk);
-      return true;
-    },
-  };
 }
