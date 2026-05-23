@@ -1,4 +1,4 @@
-# cprof
+# cprof (WIP)
 
 `cprof` is a Phase 1 local profile snapshot tool for Claude Code setups.
 
