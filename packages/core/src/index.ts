@@ -111,3 +111,11 @@ export {
   type RegistryLoadResult,
   type RegistryProfile,
 } from "./registry.js";
+export {
+  checkInstalledProfileUpdates,
+  loadInstalledProfileState,
+  recordInstalledProfile,
+  type InstalledProfileRecord,
+  type InstalledProfileState,
+  type ProfileUpdateStatus,
+} from "./state.js";

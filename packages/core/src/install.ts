@@ -16,6 +16,7 @@ import type {
 } from "@cprof/schema";
 
 import { checkGeneratedOutputForLeaks } from "./leak-check.js";
+import { recordInstalledProfile } from "./state.js";
 import { validateProfile } from "./validate.js";
 
 export type InstallScope = "project" | "global" | "include-global";
@@ -30,6 +31,7 @@ export interface InstallProfileOptions {
   readonly force?: boolean;
   readonly env?: Readonly<Record<string, string | undefined>>;
   readonly now?: Date;
+  readonly installSource?: string;
 }
 
 export interface InstallWrite {
@@ -171,6 +173,15 @@ export async function installProfile(
       await mkdir(dirname(write.path), { recursive: true });
       await writeFile(write.path, write.contents, "utf8");
     }
+    await recordInstalledProfile(statePathForContext(context), {
+      name: context.profile.name,
+      version: context.profile.version,
+      source: options.installSource ?? options.profilePath,
+      target: targetForContext(context),
+      profileScope: context.profile.profileScope,
+      includesGlobal: context.profile.includesGlobal,
+      installedAt: (options.now ?? new Date()).toISOString(),
+    });
   }
 
   const report = createInstallReport({
@@ -202,6 +213,21 @@ export async function installProfile(
     errors: [],
     report,
   };
+}
+
+function statePathForContext(context: PlanContext): string {
+  return context.allowedScopes.includes("project")
+    ? join(context.projectRoot, ".cprof-state.json")
+    : join(context.claudeHome, ".cprof-state.json");
+}
+
+function targetForContext(context: PlanContext): "project" | "global" | "mixed" {
+  return context.allowedScopes.includes("project") &&
+    context.allowedScopes.includes("global")
+    ? "mixed"
+    : context.allowedScopes.includes("global")
+      ? "global"
+      : "project";
 }
 
 async function readProfile(

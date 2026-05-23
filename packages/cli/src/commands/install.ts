@@ -53,6 +53,7 @@ export async function runInstall(
     dryRun: parsed.dryRun,
     force: parsed.force,
     scope: parsed.scope,
+    installSource: parsed.profilePath,
   });
 
   const output = result.ok ? options.stdout : options.stderr;

@@ -28,6 +28,8 @@ node packages/cli/dist/index.js install github:owner/repo --dry-run
 node packages/cli/dist/index.js registry list registry.json
 node packages/cli/dist/index.js registry search registry.json typescript
 node packages/cli/dist/index.js registry show registry.json owner/profile
+node packages/cli/dist/index.js profiles list
+node packages/cli/dist/index.js profiles outdated registry.json
 node packages/cli/dist/index.js validate claude-profile.json
 node packages/cli/dist/index.js diff a.json b.json
 ```
@@ -46,10 +48,12 @@ node packages/cli/dist/index.js diff a.json b.json
 - `cprof registry list <index>`: lists profiles from a local registry index.
 - `cprof registry search <index> <query>`: searches registry metadata.
 - `cprof registry show <index> <id>`: shows one registry entry.
+- `cprof profiles list`: lists profiles recorded by local installs.
+- `cprof profiles outdated <index>`: checks installed profiles against registry versions.
 - `cprof validate <file>`: validates a profile against the schema.
 - `cprof diff <a.json> <b.json>`: compares two profiles semantically.
 
-See [docs/phase-1.md](docs/phase-1.md) for snapshot behavior, [docs/phase-2.md](docs/phase-2.md) for local install behavior, [docs/phase-3.md](docs/phase-3.md) for remote references, [docs/phase-4.md](docs/phase-4.md) for registry discovery, and [docs/cprofignore.md](docs/cprofignore.md) for ignore rules.
+See [docs/phase-1.md](docs/phase-1.md) for snapshot behavior, [docs/phase-2.md](docs/phase-2.md) for local install behavior, [docs/phase-3.md](docs/phase-3.md) for remote references, [docs/phase-4.md](docs/phase-4.md) for registry discovery, [docs/phase-5.md](docs/phase-5.md) for installed state and update checks, and [docs/cprofignore.md](docs/cprofignore.md) for ignore rules.
 
 ## Packages
 

@@ -5,6 +5,7 @@ export interface RegistryProfile {
   readonly name: string;
   readonly description?: string;
   readonly source: string;
+  readonly version?: string;
   readonly scope?: "project" | "global" | "mixed";
   readonly tags?: readonly string[];
   readonly author?: string;
@@ -114,6 +115,13 @@ function validateRegistry(value: unknown): readonly string[] {
       }
     }
 
+    if (
+      profile.version !== undefined &&
+      (typeof profile.version !== "string" || profile.version.length === 0)
+    ) {
+      errors.push(`/profiles/${index}/version must be a non-empty string`);
+    }
+
     if (typeof profile.id === "string") {
       if (seenIds.has(profile.id)) {
         errors.push(`/profiles/${index}/id must be unique`);
@@ -154,6 +162,7 @@ function searchableText(profile: RegistryProfile): string {
     profile.name,
     profile.description,
     profile.source,
+    profile.version,
     profile.scope,
     profile.author,
     ...(profile.tags ?? []),
