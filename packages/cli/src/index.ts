@@ -2,12 +2,14 @@
 
 import { runDiff } from "./commands/diff.js";
 import { runInit } from "./commands/init.js";
+import { runInstall } from "./commands/install.js";
 import { runRefresh } from "./commands/refresh.js";
 import { runValidate } from "./commands/validate.js";
 
 export interface MainOptions {
   readonly cwd?: string;
   readonly homeDir?: string;
+  readonly env?: Readonly<Record<string, string | undefined>>;
   readonly stdout?: Pick<NodeJS.WriteStream, "write">;
   readonly stderr?: Pick<NodeJS.WriteStream, "write">;
 }
@@ -39,6 +41,16 @@ export async function main(
     return runRefresh(flags, {
       cwd: options.cwd ?? process.cwd(),
       homeDir: options.homeDir,
+      stdout,
+      stderr,
+    });
+  }
+
+  if (command === "install") {
+    return runInstall(flags, {
+      cwd: options.cwd ?? process.cwd(),
+      homeDir: options.homeDir,
+      env: options.env,
       stdout,
       stderr,
     });

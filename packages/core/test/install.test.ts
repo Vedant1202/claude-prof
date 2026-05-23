@@ -1,0 +1,359 @@
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { buildManifest } from "../src/manifest.js";
+import { createProfileSourceMetadata } from "../src/sources.js";
+import { installProfile } from "../src/install.js";
+
+let tempDir: string;
+let profileDir: string;
+let targetDir: string;
+let homeDir: string;
+
+beforeEach(async () => {
+  tempDir = await mkdtemp(join(tmpdir(), "cprof-install-"));
+  profileDir = join(tempDir, "profile");
+  targetDir = join(tempDir, "target");
+  homeDir = join(tempDir, "home");
+  await mkdir(profileDir, { recursive: true });
+  await mkdir(targetDir, { recursive: true });
+});
+
+afterEach(async () => {
+  await rm(tempDir, { force: true, recursive: true });
+});
+
+describe("installProfile", () => {
+  it("dry-runs project writes without mutating the target", async () => {
+    await writeAsset("skills/review/SKILL.md", "# Review\n");
+    await writeProfile(
+      buildManifest({
+        name: "project",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        settings: { model: "sonnet" },
+        skills: {
+          review: { source: "./skills/review", scope: "project" },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      dryRun: true,
+    });
+
+    expect(result).toMatchObject({ ok: true, exitCode: 0, dryRun: true });
+    expect(result.writes.map((write) => write.section)).toEqual([
+      "settings",
+      "skills",
+    ]);
+    await expect(
+      readFile(join(targetDir, ".claude", "skills", "review", "SKILL.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("installs project assets and writes an install report", async () => {
+    await writeAsset("commands/deploy.md", "Deploy\n");
+    await writeProfile(
+      buildManifest({
+        name: "project",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        commands: {
+          deploy: { source: "./commands/deploy.md", scope: "project" },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    await expect(
+      readFile(join(targetDir, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("Deploy\n");
+    await expect(
+      readFile(join(targetDir, "cprof-install-report.txt"), "utf8"),
+    ).resolves.toContain("Writes: 1");
+  });
+
+  it("fails on conflicts unless force is passed", async () => {
+    await writeAsset("commands/deploy.md", "New deploy\n");
+    await mkdir(join(targetDir, ".claude", "commands"), { recursive: true });
+    await writeFile(
+      join(targetDir, ".claude", "commands", "deploy.md"),
+      "Existing deploy\n",
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "project",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        commands: {
+          deploy: { source: "./commands/deploy.md", scope: "project" },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result).toMatchObject({ ok: false, exitCode: 1 });
+    expect(result.conflicts).toHaveLength(1);
+    await expect(
+      readFile(join(targetDir, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("Existing deploy\n");
+  });
+
+  it("backs up and overwrites conflicts with force", async () => {
+    await writeAsset("commands/deploy.md", "New deploy\n");
+    await mkdir(join(targetDir, ".claude", "commands"), { recursive: true });
+    await writeFile(
+      join(targetDir, ".claude", "commands", "deploy.md"),
+      "Existing deploy\n",
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "project",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        commands: {
+          deploy: { source: "./commands/deploy.md", scope: "project" },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      force: true,
+      now: new Date("2026-05-22T00:00:00.000Z"),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.backups).toHaveLength(1);
+    await expect(
+      readFile(join(targetDir, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("New deploy\n");
+    await expect(
+      readFile(
+        join(
+          targetDir,
+          ".cprof-backups",
+          "2026-05-22T00-00-00-000Z",
+          ".claude",
+          "commands",
+          "deploy.md",
+        ),
+        "utf8",
+      ),
+    ).resolves.toBe("Existing deploy\n");
+  });
+
+  it("installs only project scoped entries from mixed profiles by default", async () => {
+    await writeAsset("commands/project.md", "Project\n");
+    await writeAsset("commands/global.md", "Global\n");
+    await writeProfile(
+      buildManifest({
+        name: "mixed",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({
+          mode: "project",
+          includeGlobal: true,
+        }),
+        commands: {
+          project: { source: "./commands/project.md", scope: "project" },
+          global: { source: "./commands/global.md", scope: "global" },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.skipped).toContainEqual({
+      section: "commands",
+      name: "global",
+      reason: "scope-filtered",
+    });
+    await expect(
+      readFile(join(targetDir, ".claude", "commands", "project.md"), "utf8"),
+    ).resolves.toBe("Project\n");
+    await expect(
+      readFile(join(homeDir, ".claude", "commands", "global.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("fails before writing when required env vars are missing", async () => {
+    await writeProfile(
+      buildManifest({
+        name: "secret",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        mcpServers: {
+          github: {
+            command: "npx",
+            env: { GITHUB_TOKEN: "${env:GITHUB_TOKEN}" },
+            scope: "project",
+          },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      env: {},
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      exitCode: 1,
+      missingSecrets: ["GITHUB_TOKEN"],
+    });
+    await expect(readFile(join(targetDir, ".mcp.json"), "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
+
+  it("resolves env placeholders into local config without reporting values", async () => {
+    await writeProfile(
+      buildManifest({
+        name: "secret",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        mcpServers: {
+          github: {
+            command: "npx",
+            env: { GITHUB_TOKEN: "${env:GITHUB_TOKEN}" },
+            scope: "project",
+          },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      env: { GITHUB_TOKEN: "ghp_123456789012345678901234567890123456" },
+    });
+
+    expect(result.ok).toBe(true);
+    await expect(readFile(join(targetDir, ".mcp.json"), "utf8")).resolves.toContain(
+      "ghp_123456789012345678901234567890123456",
+    );
+    expect(result.report).not.toContain("ghp_123456789012345678901234567890123456");
+  });
+
+  it("reports hooks and plugins as inventory-only skips", async () => {
+    await writeProfile(
+      buildManifest({
+        name: "inventory",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "global" }),
+        hooks: {
+          bash: { event: "PreToolUse", matcher: "Bash" },
+        },
+        plugins: {
+          "agent-skills@addy-agent-skills": {
+            marketplace: "addy-agent-skills",
+            scope: "global",
+          },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.skipped).toEqual([
+      { section: "hooks", name: "bash", reason: "hook-inventory-only" },
+      {
+        section: "plugins",
+        name: "agent-skills@addy-agent-skills",
+        reason: "plugin-inventory-only",
+      },
+    ]);
+  });
+
+  it("does not follow symlinks from profile assets", async () => {
+    const outside = join(tempDir, "outside.md");
+    await writeFile(outside, "Outside\n", "utf8");
+    await mkdir(join(profileDir, "skills", "linked"), { recursive: true });
+    await symlink(outside, join(profileDir, "skills", "linked", "outside.md"));
+    await writeFile(
+      join(profileDir, "skills", "linked", "SKILL.md"),
+      "# Linked\n",
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "linked",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        skills: {
+          linked: { source: "./skills/linked", scope: "project" },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    await expect(
+      readFile(join(targetDir, ".claude", "skills", "linked", "SKILL.md"), "utf8"),
+    ).resolves.toBe("# Linked\n");
+    await expect(
+      readFile(join(targetDir, ".claude", "skills", "linked", "outside.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+});
+
+async function writeAsset(path: string, contents: string): Promise<void> {
+  const filePath = join(profileDir, path);
+  await mkdir(join(filePath, ".."), { recursive: true });
+  await writeFile(filePath, contents, "utf8");
+}
+
+async function writeProfile(profile: unknown): Promise<void> {
+  await writeFile(
+    join(profileDir, "claude-profile.json"),
+    `${JSON.stringify(profile, null, 2)}\n`,
+    "utf8",
+  );
+}

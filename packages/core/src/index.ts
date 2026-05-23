@@ -83,3 +83,14 @@ export {
   type InstalledPluginMap,
   type PluginMetadata,
 } from "./plugins.js";
+export {
+  createInstallReport,
+  installProfile,
+  type InstallConflict,
+  type InstallExitCode,
+  type InstallProfileOptions,
+  type InstallResult,
+  type InstallScope,
+  type InstallSkipped,
+  type InstallWrite,
+} from "./install.js";
