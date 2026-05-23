@@ -71,3 +71,10 @@ export {
   createScanReport,
   type ScanReportInput,
 } from "./report.js";
+export {
+  diffProfiles,
+  formatProfileDiff,
+  type DiffEntry,
+  type DiffKind,
+  type ProfileDiff,
+} from "./diff.js";
