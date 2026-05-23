@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { runInit } from "./commands/init.js";
+import { runRefresh } from "./commands/refresh.js";
+import { runValidate } from "./commands/validate.js";
 
 export interface MainOptions {
   readonly cwd?: string;
@@ -24,6 +26,22 @@ export async function main(
 
   if (command === "init") {
     return runInit(flags, {
+      cwd: options.cwd ?? process.cwd(),
+      stdout,
+      stderr,
+    });
+  }
+
+  if (command === "refresh") {
+    return runRefresh(flags, {
+      cwd: options.cwd ?? process.cwd(),
+      stdout,
+      stderr,
+    });
+  }
+
+  if (command === "validate") {
+    return runValidate(flags, {
       cwd: options.cwd ?? process.cwd(),
       stdout,
       stderr,
