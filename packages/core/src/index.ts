@@ -55,7 +55,9 @@ export {
 } from "./sources.js";
 export {
   buildManifest,
+  buildManifestWithRedactions,
   type BuildManifestInput,
+  type BuildManifestResult,
   type ManifestSectionMap,
 } from "./manifest.js";
 export {
@@ -66,6 +68,11 @@ export {
   type BundledAsset,
   type SkippedAsset,
 } from "./bundler.js";
+export {
+  scanClaudeProfile,
+  type ScanClaudeProfileOptions,
+  type ScanClaudeProfileResult,
+} from "./scanner.js";
 export {
   createProfileGitignore,
   createScanReport,

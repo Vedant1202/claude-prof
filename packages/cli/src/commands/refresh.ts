@@ -3,11 +3,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 import {
-  buildManifest,
   createProfileGitignore,
-  createProfileSourceMetadata,
   createScanReport,
-  readInstalledPlugins,
+  scanClaudeProfile,
   validateProfile,
 } from "@cprof/core";
 import type { CprofProfile } from "@cprof/schema";
@@ -41,25 +39,21 @@ export async function runRefresh(
     return 1;
   }
 
-  const sourceMetadata = createProfileSourceMetadata({
+  const scan = await scanClaudeProfile({
+    name: existing.profile.name,
+    version: existing.profile.version,
+    description: existing.profile.description,
+    claudeCode: existing.profile.claudeCode,
+    cwd: options.cwd,
+    homeDir: options.homeDir ?? homedir(),
+    outputRoot: options.cwd,
     mode: existing.profile.profileScope,
     includeGlobal:
       existing.profile.profileScope === "project"
         ? existing.profile.includesGlobal
         : false,
   });
-  const plugins =
-    existing.profile.profileScope === "global" || existing.profile.includesGlobal
-      ? await readInstalledPlugins(join(options.homeDir ?? homedir(), ".claude"))
-      : {};
-  const refreshed = buildManifest({
-    name: existing.profile.name,
-    version: existing.profile.version,
-    description: existing.profile.description,
-    claudeCode: existing.profile.claudeCode,
-    sourceMetadata,
-    plugins,
-  });
+  const refreshed = scan.manifest;
   const validation = validateProfile(refreshed);
 
   if (!validation.valid) {
@@ -67,22 +61,19 @@ export async function runRefresh(
     return validation.exitCode;
   }
 
-  await writeFile(profilePath, `${JSON.stringify(refreshed, null, 2)}\n`, "utf8");
-  await writeFile(join(options.cwd, ".gitignore"), createProfileGitignore(), "utf8");
+  await writeFile(
+    profilePath,
+    `${JSON.stringify(refreshed, null, 2)}\n`,
+    "utf8",
+  );
+  await writeFile(
+    join(options.cwd, ".gitignore"),
+    createProfileGitignore(),
+    "utf8",
+  );
   await writeFile(
     join(options.cwd, "cprof-scan-report.txt"),
-    createScanReport({
-      detected: {
-        agents: 0,
-        commands: 0,
-        hooks: 0,
-        mcpServers: 0,
-        memory: 0,
-        plugins: Object.keys(plugins).length,
-        rules: 0,
-        skills: 0,
-      },
-    }),
+    createScanReport(scan.report),
     "utf8",
   );
 

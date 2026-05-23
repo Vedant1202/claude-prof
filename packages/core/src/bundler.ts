@@ -3,9 +3,16 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
 import { checkGeneratedOutputForLeaks } from "./leak-check.js";
+import type { IgnorePolicy } from "./ignore.js";
 import { collectSafePaths } from "./traversal.js";
 
-export type AssetKind = "skills" | "commands" | "agents" | "memory" | "hooks";
+export type AssetKind =
+  | "skills"
+  | "commands"
+  | "agents"
+  | "memory"
+  | "rules"
+  | "hooks";
 
 export interface AssetBundleInput {
   readonly kind: AssetKind;
@@ -32,9 +39,14 @@ export interface AssetBundleResult {
   readonly skipped: readonly SkippedAsset[];
 }
 
+export interface AssetBundleOptions {
+  readonly ignorePolicy?: IgnorePolicy;
+}
+
 export async function bundleAssets(
   assets: readonly AssetBundleInput[],
   outputRoot: string,
+  options: AssetBundleOptions = {},
 ): Promise<AssetBundleResult> {
   const bundled: BundledAsset[] = [];
   const skipped: SkippedAsset[] = [];
@@ -48,7 +60,7 @@ export async function bundleAssets(
       continue;
     }
 
-    const output = await readAssetOutput(asset, outputRoot);
+    const output = await readAssetOutput(asset, outputRoot, options);
     const leakCheck = checkGeneratedOutputForLeaks(
       output.files.map((file) => ({
         path: file.destination,
@@ -68,7 +80,11 @@ export async function bundleAssets(
       await mkdir(dirname(join(outputRoot, file.destination)), {
         recursive: true,
       });
-      await writeFile(join(outputRoot, file.destination), file.contents, "utf8");
+      await writeFile(
+        join(outputRoot, file.destination),
+        file.contents,
+        "utf8",
+      );
     }
 
     bundled.push({
@@ -99,12 +115,15 @@ interface AssetOutputFile {
 async function readAssetOutput(
   asset: AssetBundleInput,
   outputRoot: string,
+  options: AssetBundleOptions,
 ): Promise<AssetOutput> {
   const sourceStat = await stat(asset.sourcePath);
   const destinationRoot = join(asset.kind, asset.name);
 
   if (sourceStat.isDirectory()) {
-    const traversal = await collectSafePaths(asset.sourcePath);
+    const traversal = await collectSafePaths(asset.sourcePath, {
+      ignorePolicy: options.ignorePolicy,
+    });
     const files = await Promise.all(
       traversal.entries
         .filter((entry) => !entry.directory)
@@ -148,16 +167,25 @@ function hashAsset(files: readonly AssetOutputFile[]): `sha256:${string}` {
   return `sha256:${hash.digest("hex")}`;
 }
 
-function compareAssets(left: AssetBundleInput, right: AssetBundleInput): number {
-  return `${left.kind}/${left.name}`.localeCompare(`${right.kind}/${right.name}`);
+function compareAssets(
+  left: AssetBundleInput,
+  right: AssetBundleInput,
+): number {
+  return `${left.kind}/${left.name}`.localeCompare(
+    `${right.kind}/${right.name}`,
+  );
 }
 
 function compareBundled(left: BundledAsset, right: BundledAsset): number {
-  return `${left.kind}/${left.name}`.localeCompare(`${right.kind}/${right.name}`);
+  return `${left.kind}/${left.name}`.localeCompare(
+    `${right.kind}/${right.name}`,
+  );
 }
 
 function compareSkipped(left: SkippedAsset, right: SkippedAsset): number {
-  return `${left.kind}/${left.name}`.localeCompare(`${right.kind}/${right.name}`);
+  return `${left.kind}/${left.name}`.localeCompare(
+    `${right.kind}/${right.name}`,
+  );
 }
 
 function compareOutputFiles(

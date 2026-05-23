@@ -137,9 +137,7 @@ function redactNode(
 }
 
 function deriveEnvName(path: readonly string[]): string {
-  const key = [...path]
-    .reverse()
-    .find((part) => !/^\d+$/.test(part));
+  const key = [...path].reverse().find((part) => !/^\d+$/.test(part));
   const fallback = "SECRET";
   const envName = (key ?? fallback)
     .replace(/([a-z])([A-Z])/g, "$1_$2")
@@ -155,7 +153,13 @@ function formatPath(path: readonly string[]): string {
 }
 
 function isHighEntropy(value: string): boolean {
-  if (value.length < 32 || /\s/.test(value) || value.includes("://")) {
+  if (
+    value.length < 32 ||
+    /\s/.test(value) ||
+    value.includes("://") ||
+    value.includes("/") ||
+    value.includes("@")
+  ) {
     return false;
   }
 
@@ -176,5 +180,8 @@ function countOccurrences(value: string, character: string): number {
 function isStructuralManifestPath(keyPath: readonly string[]): boolean {
   const path = keyPath.join("/");
 
-  return ["$schema", "version", "claudeCode"].includes(path);
+  return (
+    ["$schema", "version", "claudeCode"].includes(path) ||
+    keyPath.at(-1) === "hash"
+  );
 }

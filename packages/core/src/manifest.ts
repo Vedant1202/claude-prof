@@ -5,7 +5,7 @@ import type {
   ProfileItem,
 } from "@cprof/schema";
 
-import { redactSecrets } from "./redactor.js";
+import { redactSecrets, type Redaction } from "./redactor.js";
 import type { ProfileSourceMetadata } from "./sources.js";
 
 export type ManifestSectionMap<T> = Readonly<Record<string, T>>;
@@ -27,7 +27,18 @@ export interface BuildManifestInput {
   readonly mcpServers?: ManifestSectionMap<McpServer>;
 }
 
+export interface BuildManifestResult {
+  readonly manifest: CprofProfile;
+  readonly redactions: readonly Redaction[];
+}
+
 export function buildManifest(input: BuildManifestInput): CprofProfile {
+  return buildManifestWithRedactions(input).manifest;
+}
+
+export function buildManifestWithRedactions(
+  input: BuildManifestInput,
+): BuildManifestResult {
   const manifest = compactProfile({
     $schema: "https://cprof.dev/schema/v1.json",
     name: input.name,
@@ -50,13 +61,16 @@ export function buildManifest(input: BuildManifestInput): CprofProfile {
   const redaction = redactSecrets(manifest);
   const redactedManifest = redaction.value as unknown as CprofProfile;
 
-  return compactProfile({
-    ...redactedManifest,
-    secrets:
-      redaction.requiredSecrets.length > 0
-        ? { required: redaction.requiredSecrets, optional: [] }
-        : undefined,
-  });
+  return {
+    manifest: compactProfile({
+      ...redactedManifest,
+      secrets:
+        redaction.requiredSecrets.length > 0
+          ? { required: redaction.requiredSecrets, optional: [] }
+          : undefined,
+    }),
+    redactions: redaction.redactions,
+  };
 }
 
 function normalizeHooks(

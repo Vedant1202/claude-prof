@@ -3,11 +3,9 @@ import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 
 import {
-  buildManifest,
   createProfileGitignore,
-  createProfileSourceMetadata,
   createScanReport,
-  readInstalledPlugins,
+  scanClaudeProfile,
   validateProfile,
 } from "@cprof/core";
 
@@ -29,16 +27,16 @@ export async function runInit(
     return 1;
   }
 
-  const sourceMetadata = createProfileSourceMetadata(parsed);
-  const plugins = shouldIncludeGlobalPlugins(parsed)
-    ? await readInstalledPlugins(join(options.homeDir ?? homedir(), ".claude"))
-    : {};
-  const manifest = buildManifest({
+  const scan = await scanClaudeProfile({
     name: createProfileName(options.cwd, parsed.mode, parsed.includeGlobal),
     version: "1.0.0",
-    sourceMetadata,
-    plugins,
+    cwd: options.cwd,
+    homeDir: options.homeDir ?? homedir(),
+    outputRoot: options.cwd,
+    mode: parsed.mode,
+    includeGlobal: parsed.mode === "project" ? parsed.includeGlobal : false,
   });
+  const manifest = scan.manifest;
   const validation = validateProfile(manifest);
 
   if (!validation.valid) {
@@ -51,21 +49,14 @@ export async function runInit(
     `${JSON.stringify(manifest, null, 2)}\n`,
     "utf8",
   );
-  await writeFile(join(options.cwd, ".gitignore"), createProfileGitignore(), "utf8");
+  await writeFile(
+    join(options.cwd, ".gitignore"),
+    createProfileGitignore(),
+    "utf8",
+  );
   await writeFile(
     join(options.cwd, "cprof-scan-report.txt"),
-    createScanReport({
-      detected: {
-        agents: 0,
-        commands: 0,
-        hooks: 0,
-        mcpServers: 0,
-        memory: 0,
-        plugins: Object.keys(plugins).length,
-        rules: 0,
-        skills: 0,
-      },
-    }),
+    createScanReport(scan.report),
     "utf8",
   );
 
@@ -78,16 +69,17 @@ export async function runInit(
   return 0;
 }
 
-function shouldIncludeGlobalPlugins(parsed: ParsedInitFlags): boolean {
-  return (
-    parsed.valid === true &&
-    (parsed.mode === "global" || parsed.includeGlobal === true)
-  );
-}
-
 type ParsedInitFlags =
-  | { readonly valid: true; readonly mode: "project"; readonly includeGlobal: boolean }
-  | { readonly valid: true; readonly mode: "global"; readonly includeGlobal?: false }
+  | {
+      readonly valid: true;
+      readonly mode: "project";
+      readonly includeGlobal: boolean;
+    }
+  | {
+      readonly valid: true;
+      readonly mode: "global";
+      readonly includeGlobal?: false;
+    }
   | { readonly valid: false; readonly error: string };
 
 function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
