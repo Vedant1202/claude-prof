@@ -1,5 +1,4 @@
 This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
-The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
 
 <file_summary>
 This section contains a summary of this file.
@@ -33,20 +32,92 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: skills/
+- Files matching these patterns are excluded: node_modules
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
-- Content has been compressed - code blocks are separated by ⋮---- delimiter
 - Files are sorted by Git change count (files with more changes are at the bottom)
 </notes>
 
 </file_summary>
 
 <directory_structure>
+[.claude]/
+  settings.local.json
 
+[.github]/
+  workflows/
+    ci.yml
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="settings.local.json">
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install *)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(pnpm --version)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm --filter cprof test -- --reporter=verbose)",
+      "Bash(pnpm --filter @cprof/core test)"
+    ]
+  }
+}
+</file>
+
+<file path="workflows/ci.yml">
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-lint:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        node:
+          - 22
+          - 24
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build
+        run: corepack pnpm build
+
+      - name: Test
+        run: corepack pnpm test
+
+      - name: Lint
+        run: corepack pnpm lint
+</file>
 
 </files>
