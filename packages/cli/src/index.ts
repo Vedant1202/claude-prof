@@ -7,6 +7,7 @@ import { runValidate } from "./commands/validate.js";
 
 export interface MainOptions {
   readonly cwd?: string;
+  readonly homeDir?: string;
   readonly stdout?: Pick<NodeJS.WriteStream, "write">;
   readonly stderr?: Pick<NodeJS.WriteStream, "write">;
 }
@@ -28,6 +29,7 @@ export async function main(
   if (command === "init") {
     return runInit(flags, {
       cwd: options.cwd ?? process.cwd(),
+      homeDir: options.homeDir,
       stdout,
       stderr,
     });
@@ -36,6 +38,7 @@ export async function main(
   if (command === "refresh") {
     return runRefresh(flags, {
       cwd: options.cwd ?? process.cwd(),
+      homeDir: options.homeDir,
       stdout,
       stderr,
     });

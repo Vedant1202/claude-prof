@@ -20,6 +20,8 @@ export const CANONICAL_GLOBAL_PATHS = [
   "~/.claude/skills/**",
   "~/.claude/commands/**",
   "~/.claude/agents/**",
+  "~/.claude/plugins/installed_plugins.json",
+  "~/.claude/plugins/known_marketplaces.json",
   "~/.claude.json",
 ] as const;
 

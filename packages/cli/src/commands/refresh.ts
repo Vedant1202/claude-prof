@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
 
 import {
@@ -6,12 +7,14 @@ import {
   createProfileGitignore,
   createProfileSourceMetadata,
   createScanReport,
+  readInstalledPlugins,
   validateProfile,
 } from "@cprof/core";
 import type { CprofProfile } from "@cprof/schema";
 
 export interface RefreshCommandOptions {
   readonly cwd: string;
+  readonly homeDir?: string;
   readonly stdout: Pick<NodeJS.WriteStream, "write">;
   readonly stderr: Pick<NodeJS.WriteStream, "write">;
 }
@@ -45,12 +48,17 @@ export async function runRefresh(
         ? existing.profile.includesGlobal
         : false,
   });
+  const plugins =
+    existing.profile.profileScope === "global" || existing.profile.includesGlobal
+      ? await readInstalledPlugins(join(options.homeDir ?? homedir(), ".claude"))
+      : {};
   const refreshed = buildManifest({
     name: existing.profile.name,
     version: existing.profile.version,
     description: existing.profile.description,
     claudeCode: existing.profile.claudeCode,
     sourceMetadata,
+    plugins,
   });
   const validation = validateProfile(refreshed);
 
@@ -70,7 +78,7 @@ export async function runRefresh(
         hooks: 0,
         mcpServers: 0,
         memory: 0,
-        plugins: 0,
+        plugins: Object.keys(plugins).length,
         rules: 0,
         skills: 0,
       },

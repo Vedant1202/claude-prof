@@ -78,3 +78,8 @@ export {
   type DiffKind,
   type ProfileDiff,
 } from "./diff.js";
+export {
+  readInstalledPlugins,
+  type InstalledPluginMap,
+  type PluginMetadata,
+} from "./plugins.js";

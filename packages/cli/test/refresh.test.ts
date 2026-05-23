@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -19,6 +19,7 @@ afterEach(async () => {
 
 describe("cprof refresh", () => {
   it("refreshes from recorded sources and preserves user-owned fields", async () => {
+    const homeDir = await createHomeWithInstalledPlugin();
     const profile = buildManifest({
       name: "custom-name",
       version: "2.0.0",
@@ -37,7 +38,7 @@ describe("cprof refresh", () => {
       "utf8",
     );
 
-    await expect(main(["refresh"], { cwd: tempDir })).resolves.toBe(0);
+    await expect(main(["refresh"], { cwd: tempDir, homeDir })).resolves.toBe(0);
 
     const refreshed = await readProfile();
     expect(refreshed.name).toBe("custom-name");
@@ -45,6 +46,11 @@ describe("cprof refresh", () => {
     expect(refreshed.description).toBe("Keep this");
     expect(refreshed.includesGlobal).toBe(true);
     expect(refreshed.skills).toBeUndefined();
+    expect(refreshed.plugins).toMatchObject({
+      "agent-skills@addy-agent-skills": {
+        marketplace: "addy-agent-skills",
+      },
+    });
   });
 
   it("returns 2 when the profile is missing", async () => {
@@ -60,6 +66,35 @@ async function readProfile(): Promise<Record<string, unknown>> {
   return JSON.parse(
     await readFile(join(tempDir, "claude-profile.json"), "utf8"),
   ) as Record<string, unknown>;
+}
+
+async function createHomeWithInstalledPlugin(): Promise<string> {
+  const homeDir = join(tempDir, "home");
+  const pluginDir = join(homeDir, ".claude", "plugins");
+  await mkdir(pluginDir, { recursive: true });
+  await writeFile(
+    join(pluginDir, "installed_plugins.json"),
+    JSON.stringify({
+      version: 2,
+      plugins: {
+        "agent-skills@addy-agent-skills": [
+          { scope: "user", version: "1.0.0", installPath: "/private/cache" },
+        ],
+      },
+    }),
+    "utf8",
+  );
+  await writeFile(
+    join(pluginDir, "known_marketplaces.json"),
+    JSON.stringify({
+      "addy-agent-skills": {
+        source: { source: "github", repo: "addyosmani/agent-skills" },
+      },
+    }),
+    "utf8",
+  );
+
+  return homeDir;
 }
 
 function createWritable(): Pick<NodeJS.WriteStream, "write"> & {

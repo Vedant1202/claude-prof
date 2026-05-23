@@ -1,4 +1,5 @@
 import { writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 
 import {
@@ -6,11 +7,13 @@ import {
   createProfileGitignore,
   createProfileSourceMetadata,
   createScanReport,
+  readInstalledPlugins,
   validateProfile,
 } from "@cprof/core";
 
 export interface InitCommandOptions {
   readonly cwd: string;
+  readonly homeDir?: string;
   readonly stdout: Pick<NodeJS.WriteStream, "write">;
   readonly stderr: Pick<NodeJS.WriteStream, "write">;
 }
@@ -27,10 +30,14 @@ export async function runInit(
   }
 
   const sourceMetadata = createProfileSourceMetadata(parsed);
+  const plugins = shouldIncludeGlobalPlugins(parsed)
+    ? await readInstalledPlugins(join(options.homeDir ?? homedir(), ".claude"))
+    : {};
   const manifest = buildManifest({
     name: createProfileName(options.cwd, parsed.mode, parsed.includeGlobal),
     version: "1.0.0",
     sourceMetadata,
+    plugins,
   });
   const validation = validateProfile(manifest);
 
@@ -54,7 +61,7 @@ export async function runInit(
         hooks: 0,
         mcpServers: 0,
         memory: 0,
-        plugins: 0,
+        plugins: Object.keys(plugins).length,
         rules: 0,
         skills: 0,
       },
@@ -69,6 +76,13 @@ export async function runInit(
   );
 
   return 0;
+}
+
+function shouldIncludeGlobalPlugins(parsed: ParsedInitFlags): boolean {
+  return (
+    parsed.valid === true &&
+    (parsed.mode === "global" || parsed.includeGlobal === true)
+  );
 }
 
 type ParsedInitFlags =
