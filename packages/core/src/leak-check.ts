@@ -38,23 +38,46 @@ export async function checkGeneratedOutputForLeaks(
 
 async function findLeaks(output: GeneratedOutput): Promise<OutputLeak[]> {
   const leaks: OutputLeak[] = [];
+  const { contents, path } = output;
 
   // Independent engine: secretlint scans the whole output for provider keys.
-  if (await detectProviderSecret(output.contents)) {
-    leaks.push({ path: output.path, tokenIndex: -1, reason: "known-pattern" });
+  if (await detectProviderSecret(contents)) {
+    leaks.push({ path, tokenIndex: -1, reason: "known-pattern" });
   }
 
-  // Generic token scan for key-name / JWT / high-entropy leaks.
-  const tokens = [...output.contents.matchAll(TOKEN_PATTERN)];
+  // Generic token scan for key-name / JWT / high-entropy leaks. Tokens arrive in
+  // ascending offset order, so a single forward cursor yields each leak's
+  // line/col in one O(n) pass rather than rescanning from the start per leak.
+  const tokens = [...contents.matchAll(TOKEN_PATTERN)];
+  let cursor = 0;
+  let line = 1;
+  let lineStart = 0;
 
   for (const [tokenIndex, match] of tokens.entries()) {
-    const token = match[0];
-    const reason = shouldRedactString(stripJsonPunctuation(token), ["value"]);
+    const reason = shouldRedactString(stripJsonPunctuation(match[0]), [
+      "value",
+    ]);
 
-    if (reason !== undefined) {
-      const { line, col } = positionAt(output.contents, match.index ?? 0);
-      leaks.push({ path: output.path, tokenIndex, reason, line, col });
+    if (reason === undefined) {
+      continue;
     }
+
+    const offset = match.index ?? 0;
+    while (cursor < offset) {
+      if (contents[cursor] === "\n") {
+        line += 1;
+        lineStart = cursor + 1;
+      }
+      cursor += 1;
+    }
+
+    leaks.push({
+      path,
+      tokenIndex,
+      reason,
+      line,
+      col: offset - lineStart + 1,
+    });
   }
 
   return leaks;
@@ -62,22 +85,4 @@ async function findLeaks(output: GeneratedOutput): Promise<OutputLeak[]> {
 
 function stripJsonPunctuation(value: string): string {
   return value.replace(/^["']+|[",']+$/g, "");
-}
-
-/** Translate a byte offset into a 1-based line and column. */
-function positionAt(
-  contents: string,
-  offset: number,
-): { readonly line: number; readonly col: number } {
-  let line = 1;
-  let lineStart = 0;
-
-  for (let index = 0; index < offset; index++) {
-    if (contents[index] === "\n") {
-      line += 1;
-      lineStart = index + 1;
-    }
-  }
-
-  return { line, col: offset - lineStart + 1 };
 }
