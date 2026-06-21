@@ -2,7 +2,9 @@
 
 `cprof` is a local profile snapshot and install tool for Claude Code setups.
 
-It creates a deterministic, schema-valid, secret-free `claude-profile.json` from a project or global Claude Code setup, then can apply a trusted local profile with dry-run, conflict checks, backups, and secret placeholder resolution. It does not fetch remote sources, upgrade dependencies, or install executable hook contents.
+It creates a deterministic, schema-valid, secret-redacted `claude-profile.json` from a project or global Claude Code setup, then can apply a trusted profile with dry-run, conflict checks, backups, and secret placeholder resolution. Remote profile JSON can be fetched over HTTPS or from GitHub and is treated as untrusted input — review it before applying. cprof does not upgrade dependencies or install executable hook contents.
+
+> Redaction is best-effort: known token prefixes, secret-like key names, JWTs, and high-entropy values are replaced with `${env:NAME}` placeholders. Review generated profiles before sharing.
 
 ## Current Commands
 

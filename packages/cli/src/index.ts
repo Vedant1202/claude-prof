@@ -10,6 +10,10 @@ import { runRegistry } from "./commands/registry.js";
 import { runValidate } from "./commands/validate.js";
 import type { ProfileReferenceFetcher } from "@cprof/core";
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
 export interface MainOptions {
   readonly cwd?: string;
   readonly homeDir?: string;
@@ -20,6 +24,22 @@ export interface MainOptions {
   readonly stderr?: Pick<NodeJS.WriteStream, "write">;
 }
 
+function readVersion(): string {
+  try {
+    const pkgPath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "package.json",
+    );
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+      readonly version?: string;
+    };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
 export async function main(
   argv: readonly string[] = process.argv.slice(2),
   options: MainOptions = {},
@@ -28,7 +48,7 @@ export async function main(
   const stderr = options.stderr ?? process.stderr;
 
   if (argv.includes("--version")) {
-    stdout.write("0.0.0\n");
+    stdout.write(`${readVersion()}\n`);
     return 0;
   }
 

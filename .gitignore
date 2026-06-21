@@ -10,6 +10,7 @@ coverage/
 *.log
 
 # Claude runtime secrets and generated state
+.claude/worktrees/
 .claude/.credentials.json
 .claude/statsig/
 .claude/cache/
@@ -28,6 +29,7 @@ coverage/
 agent-skills/
 
 skills/
-referecences/
+references/
 .plans
 .tmp
+repomix-output.xml
