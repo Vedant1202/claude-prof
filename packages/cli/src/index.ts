@@ -41,15 +41,15 @@ export async function main(
   const stdout = options.stdout ?? process.stdout;
   const stderr = options.stderr ?? process.stderr;
 
-  if (argv.includes("--version") || argv.includes("-v")) {
+  const [command, ...flags] = argv;
+
+  // Global flags only when they sit in the command position; a `--version` /
+  // `--help` *after* a command belongs to that command (routed below).
+  if (command === "--version" || command === "-v") {
     stdout.write(`${readVersion()}\n`);
     return 0;
   }
 
-  const [command, ...flags] = argv;
-
-  // Global help: no command, or `--help`/`-h` in the command position. (A
-  // `--help` *after* a command routes to that command's usage instead — below.)
   if (command === undefined || command === "--help" || command === "-h") {
     stdout.write(renderOverviewUsage());
     return 0;
