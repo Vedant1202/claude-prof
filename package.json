@@ -12,7 +12,15 @@
     "build": "corepack pnpm -r build",
     "test": "corepack pnpm -r test",
     "lint": "tsc -b --pretty false",
-    "format": "prettier --check ."
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "clean": "node scripts/clean.mjs",
+    "verify": "corepack pnpm clean && corepack pnpm build && corepack pnpm test && corepack pnpm lint && corepack pnpm format",
+    "changelog": "node scripts/changelog.mjs",
+    "publish:alpha": "corepack pnpm -r publish --tag alpha",
+    "push": "git push origin main --follow-tags",
+    "release:dry": "node scripts/release.mjs --dry-run",
+    "release:alpha": "node scripts/release.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
