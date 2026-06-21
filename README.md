@@ -4,7 +4,7 @@
 
 It creates a deterministic, schema-valid, secret-redacted `claude-profile.json` from a project or global Claude Code setup, then can apply a trusted profile with dry-run, conflict checks, backups, and secret placeholder resolution. Remote profile JSON can be fetched over HTTPS or from GitHub and is treated as untrusted input — review it before applying. cprof does not upgrade dependencies or install executable hook contents.
 
-> Redaction is best-effort: known token prefixes, secret-like key names, JWTs, and high-entropy values are replaced with `${env:NAME}` placeholders. Review generated profiles before sharing.
+> Redaction is best-effort and runs fully offline: provider keys (via [secretlint](https://github.com/secretlint/secretlint)), secret-like key names, JWTs, and high-entropy values become `${env:NAME}` placeholders, and the generated manifest is re-scanned before write. It will not catch low-entropy secrets under non-sensitive keys. Always review a generated profile before sharing — see [docs/phase-1.md](docs/phase-1.md#secret-safety).
 
 ## Current Commands
 
