@@ -14,7 +14,7 @@ const config: Config = {
   },
 
   // GitHub Pages project site: https://Vedant1202.github.io/claude-prof/
-  url: "https://Vedant1202.github.io",
+  url: "https://vedant1202.github.io",
   baseUrl: "/claude-prof/",
   organizationName: "Vedant1202",
   projectName: "claude-prof",
@@ -47,6 +47,10 @@ const config: Config = {
             "https://github.com/Vedant1202/claude-prof/tree/main/website/",
         },
         blog: false,
+        sitemap: {
+          changefreq: "weekly",
+          priority: 0.5,
+        },
         theme: {
           customCss: "./src/css/custom.css",
         },
@@ -64,7 +68,15 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: "img/docusaurus-social-card.jpg",
+    image: "img/social-card.svg",
+    metadata: [
+      {
+        name: "keywords",
+        content:
+          "claude code, cprof, mcp, secret redaction, dotfiles, configuration, migration, cli, local-first",
+      },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
     // Site-wide alpha flag. announcementBar is the right tool for a persistent,
     // global notice — `:::` admonitions only render under MDX, and our .md pages
     // are parsed as CommonMark (markdown.format: 'detect'), which by design does
