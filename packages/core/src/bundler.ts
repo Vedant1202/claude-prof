@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, posix } from "node:path";
 
 import { checkGeneratedOutputForLeaks } from "./leak-check.js";
 import type { IgnorePolicy } from "./ignore.js";
@@ -118,7 +118,10 @@ async function readAssetOutput(
   options: AssetBundleOptions,
 ): Promise<AssetOutput> {
   const sourceStat = await stat(asset.sourcePath);
-  const destinationRoot = join(asset.kind, asset.name);
+  // Manifest paths must be portable: always POSIX ("/"), never OS-native
+  // separators, so a profile built on Windows installs and hashes identically
+  // on macOS/Linux.
+  const destinationRoot = posix.join(asset.kind, asset.name);
 
   if (sourceStat.isDirectory()) {
     const traversal = await collectSafePaths(asset.sourcePath, {
@@ -127,11 +130,14 @@ async function readAssetOutput(
     const files = await Promise.all(
       traversal.entries
         .filter((entry) => !entry.directory)
-        .map(async (entry) => ({
-          destination: join(destinationRoot, entry.relativePath),
-          relativePath: entry.relativePath,
-          contents: await readFile(entry.path, "utf8"),
-        })),
+        .map(async (entry) => {
+          const relativePath = toPosixPath(entry.relativePath);
+          return {
+            destination: posix.join(destinationRoot, relativePath),
+            relativePath,
+            contents: await readFile(entry.path, "utf8"),
+          };
+        }),
     );
 
     return {
@@ -146,7 +152,7 @@ async function readAssetOutput(
     destinationRoot,
     files: [
       {
-        destination: join(destinationRoot, relativePath),
+        destination: posix.join(destinationRoot, relativePath),
         relativePath,
         contents: await readFile(asset.sourcePath, "utf8"),
       },
@@ -165,6 +171,10 @@ function hashAsset(files: readonly AssetOutputFile[]): `sha256:${string}` {
   }
 
   return `sha256:${hash.digest("hex")}`;
+}
+
+function toPosixPath(value: string): string {
+  return value.replace(/\\/g, "/");
 }
 
 function compareAssets(

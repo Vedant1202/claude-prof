@@ -218,4 +218,34 @@ describe("scanClaudeProfile", () => {
       skills: 1,
     });
   });
+
+  it("captures remote (http) MCP servers without a command", async () => {
+    const project = join(tempDir, "project");
+    const home = join(tempDir, "home");
+    await mkdir(project, { recursive: true });
+    await writeFile(
+      join(project, ".mcp.json"),
+      JSON.stringify({
+        mcpServers: {
+          remote: { type: "http", url: "https://api.example.com/mcp" },
+        },
+      }),
+      "utf8",
+    );
+
+    const result = await scanClaudeProfile({
+      cwd: project,
+      homeDir: home,
+      outputRoot: project,
+      mode: "project",
+      name: "project",
+      version: "1.0.0",
+    });
+
+    expect(result.manifest.mcpServers?.remote?.type).toBe("http");
+    expect(result.manifest.mcpServers?.remote?.url).toBe(
+      "https://api.example.com/mcp",
+    );
+    expect(validateProfile(result.manifest)).toMatchObject({ valid: true });
+  });
 });

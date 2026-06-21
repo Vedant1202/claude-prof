@@ -44,6 +44,39 @@ describe("validateProfile", () => {
     expect(result.exitCode).toBe(1);
     expect(result.errors.join("\n")).toContain("must be equal to one");
   });
+
+  it("accepts a remote (http) MCP server with a url and no command", () => {
+    const result = validateProfile({
+      ...validProfile,
+      mcpServers: {
+        api: {
+          type: "http",
+          url: "https://api.example.com/mcp",
+          headers: { Authorization: "Bearer x" },
+        },
+      },
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("still accepts a stdio MCP server with a command", () => {
+    const result = validateProfile({
+      ...validProfile,
+      mcpServers: { local: { command: "npx", args: ["-y", "pkg"] } },
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects an MCP server with neither command nor url", () => {
+    const result = validateProfile({
+      ...validProfile,
+      mcpServers: { broken: { type: "http" } },
+    });
+
+    expect(result.valid).toBe(false);
+  });
 });
 
 describe("validateProfileFile", () => {

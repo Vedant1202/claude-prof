@@ -27,7 +27,10 @@ export interface HookInventory {
 }
 
 export interface McpServer {
-  readonly command: string;
+  readonly command?: string;
+  readonly type?: string;
+  readonly url?: string;
+  readonly headers?: Readonly<Record<string, string>>;
   readonly args?: readonly string[];
   readonly env?: Readonly<Record<string, string>>;
   readonly scope?: ProfileScope;

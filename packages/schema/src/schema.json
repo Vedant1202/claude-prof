@@ -221,8 +221,17 @@
     },
     "mcpServer": {
       "type": "object",
-      "required": ["command"],
       "additionalProperties": true,
+      "oneOf": [
+        {
+          "required": ["command"],
+          "properties": { "command": { "type": "string" } }
+        },
+        {
+          "required": ["url"],
+          "properties": { "url": { "type": "string" } }
+        }
+      ],
       "properties": {
         "command": {
           "type": "string"
@@ -234,6 +243,18 @@
           }
         },
         "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "enum": ["stdio", "http", "sse", "ws", "streamable-http"]
+        },
+        "url": {
+          "type": "string"
+        },
+        "headers": {
           "type": "object",
           "additionalProperties": {
             "type": "string"

@@ -115,3 +115,47 @@ describe("redactSecretsAsync", () => {
     expect(JSON.stringify(first)).toBe(JSON.stringify(second));
   });
 });
+
+describe("redactSecrets — remote MCP (F5)", () => {
+  it("preserves native ${VAR} expansion references (D5)", () => {
+    const result = redactSecrets({
+      headers: { Authorization: "Bearer ${API_KEY}" },
+      env: { TOKEN: "${GITHUB_PAT}" },
+    });
+    const value = result.value as {
+      headers: { Authorization: string };
+      env: { TOKEN: string };
+    };
+
+    expect(value.headers.Authorization).toBe("Bearer ${API_KEY}");
+    expect(value.env.TOKEN).toBe("${GITHUB_PAT}");
+  });
+
+  it("redacts a raw secret in a url query string in place (D6)", () => {
+    const result = redactSecrets({
+      mcpServers: {
+        api: {
+          url: "https://h.example.com/mcp?token=ghp_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8&mode=fast",
+        },
+      },
+    });
+    const value = result.value as {
+      mcpServers: { api: { url: string } };
+    };
+
+    expect(value.mcpServers.api.url).toBe(
+      "https://h.example.com/mcp?token=${env:TOKEN}&mode=fast",
+    );
+  });
+
+  it("leaves url query expansion references alone (D6)", () => {
+    const result = redactSecrets({
+      mcpServers: { api: { url: "https://h/mcp?token=${API_KEY}" } },
+    });
+    const value = result.value as {
+      mcpServers: { api: { url: string } };
+    };
+
+    expect(value.mcpServers.api.url).toBe("https://h/mcp?token=${API_KEY}");
+  });
+});

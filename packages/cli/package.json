@@ -20,7 +20,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@cprof/core": "workspace:*"
+    "@cprof/core": "workspace:*",
+    "@cprof/schema": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.2.4"
