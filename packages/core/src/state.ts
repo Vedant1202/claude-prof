@@ -3,8 +3,6 @@ import { dirname } from "node:path";
 
 import type { ProfileScope } from "@cprof/schema";
 
-import type { ProfileRegistry } from "./registry.js";
-
 export interface InstalledProfileRecord {
   readonly name: string;
   readonly version: string;
@@ -18,13 +16,6 @@ export interface InstalledProfileRecord {
 export interface InstalledProfileState {
   readonly version: 1;
   readonly installs: readonly InstalledProfileRecord[];
-}
-
-export interface ProfileUpdateStatus {
-  readonly installed: InstalledProfileRecord;
-  readonly registryId?: string;
-  readonly latestVersion?: string;
-  readonly status: "up-to-date" | "update-available" | "unknown";
 }
 
 export async function loadInstalledProfileState(
@@ -59,40 +50,6 @@ export async function recordInstalledProfile(
   await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
 
   return next;
-}
-
-export function checkInstalledProfileUpdates(
-  state: InstalledProfileState,
-  registry: ProfileRegistry,
-): readonly ProfileUpdateStatus[] {
-  return state.installs
-    .map((installed) => {
-      const profile = registry.profiles.find(
-        (candidate) => candidate.source === installed.source,
-      );
-
-      if (profile?.version === undefined) {
-        return {
-          installed,
-          registryId: profile?.id,
-          latestVersion: profile?.version,
-          status: "unknown" as const,
-        };
-      }
-
-      return {
-        installed,
-        registryId: profile.id,
-        latestVersion: profile.version,
-        status:
-          profile.version === installed.version
-            ? ("up-to-date" as const)
-            : ("update-available" as const),
-      };
-    })
-    .sort((left, right) =>
-      left.installed.name.localeCompare(right.installed.name),
-    );
 }
 
 function normalizeState(value: unknown): InstalledProfileState {

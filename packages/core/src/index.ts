@@ -105,36 +105,8 @@ export {
   type InstallWrite,
 } from "./install.js";
 export {
-  fetchProfileReference,
-  isRemoteProfileReference,
-  type FetchProfileReferenceOptions,
-  type FetchProfileReferenceResult,
-  type ProfileReferenceFetcher,
-  type ProfileReferenceResponse,
-} from "./remote.js";
-export {
-  findRegistryProfile,
-  listRegistryProfiles,
-  loadProfileRegistry,
-  searchRegistryProfiles,
-  type ProfileRegistry,
-  type RegistryLoadResult,
-  type RegistryProfile,
-} from "./registry.js";
-export {
-  checkInstalledProfileUpdates,
   loadInstalledProfileState,
   recordInstalledProfile,
   type InstalledProfileRecord,
   type InstalledProfileState,
-  type ProfileUpdateStatus,
 } from "./state.js";
-export {
-  checkProfilePolicy,
-  loadTeamPolicy,
-  type PolicyCheckResult,
-  type PolicyLoadResult,
-  type PolicySection,
-  type PolicyViolation,
-  type TeamPolicy,
-} from "./policy.js";
