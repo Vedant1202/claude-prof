@@ -37,6 +37,20 @@ export function parseCommonFlags(flags: readonly string[]): CommonFlags {
   return { json, quiet, rest };
 }
 
+/**
+ * Write a command's `--json` result as a single object to stdout, wrapped in the
+ * shared `{ command, ok, … }` envelope. The shape is consistent across commands;
+ * it carries no stability guarantee while cprof is alpha.
+ */
+export function emitJson(
+  stdout: CommandWriter,
+  command: string,
+  ok: boolean,
+  fields: Readonly<Record<string, unknown>> = {},
+): void {
+  stdout.write(`${JSON.stringify({ command, ok, ...fields }, null, 2)}\n`);
+}
+
 export type ReadProfileFileResult =
   | { readonly ok: true; readonly profile: CprofProfile }
   | {

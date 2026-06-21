@@ -10,6 +10,7 @@ import {
 } from "@cprof/core";
 
 import {
+  emitJson,
   parseCommonFlags,
   readProfileFile,
   type CommandWriter,
@@ -26,7 +27,7 @@ export async function runRefresh(
   flags: readonly string[],
   options: RefreshCommandOptions,
 ): Promise<number> {
-  const { quiet, rest } = parseCommonFlags(flags);
+  const { json, quiet, rest } = parseCommonFlags(flags);
 
   if (rest.length > 0) {
     options.stderr.write(`unknown refresh flag: ${rest[0]}\n`);
@@ -37,7 +38,11 @@ export async function runRefresh(
   const existing = await readProfileFile(profilePath);
 
   if (!existing.ok) {
-    options.stderr.write(`${existing.errors.join("\n")}\n`);
+    if (json) {
+      emitJson(options.stdout, "refresh", false, { errors: existing.errors });
+    } else {
+      options.stderr.write(`${existing.errors.join("\n")}\n`);
+    }
     return existing.exitCode;
   }
 
@@ -59,7 +64,11 @@ export async function runRefresh(
   const validation = validateProfile(refreshed);
 
   if (!validation.valid) {
-    options.stderr.write(`${validation.errors.join("\n")}\n`);
+    if (json) {
+      emitJson(options.stdout, "refresh", false, { errors: validation.errors });
+    } else {
+      options.stderr.write(`${validation.errors.join("\n")}\n`);
+    }
     return validation.exitCode;
   }
 
@@ -67,9 +76,15 @@ export async function runRefresh(
     const leakedPaths = [
       ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
     ];
-    options.stderr.write(
-      `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
-    );
+    if (json) {
+      emitJson(options.stdout, "refresh", false, {
+        leakCheck: { ok: false, leaks: scan.leakCheck.leaks },
+      });
+    } else {
+      options.stderr.write(
+        `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
+      );
+    }
     return 3;
   }
 
@@ -89,7 +104,14 @@ export async function runRefresh(
     "utf8",
   );
 
-  if (!quiet) {
+  if (json) {
+    emitJson(options.stdout, "refresh", true, {
+      profilePath: "claude-profile.json",
+      profileScope: refreshed.profileScope,
+      includesGlobal: refreshed.includesGlobal,
+      leakCheck: { ok: true, leaks: [] },
+    });
+  } else if (!quiet) {
     options.stderr.write("Refreshed claude-profile.json\n");
   }
   return 0;

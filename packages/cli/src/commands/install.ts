@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { installProfile, type InstallScope } from "@cprof/core";
 
-import { parseCommonFlags } from "../command-utils.js";
+import { emitJson, parseCommonFlags } from "../command-utils.js";
 
 export interface InstallCommandOptions {
   readonly cwd: string;
@@ -25,7 +25,7 @@ export async function runInstall(
   flags: readonly string[],
   options: InstallCommandOptions,
 ): Promise<number> {
-  const { quiet, rest } = parseCommonFlags(flags);
+  const { json, quiet, rest } = parseCommonFlags(flags);
   const parsed = parseInstallFlags(rest);
 
   if (parsed.valid === false) {
@@ -43,6 +43,19 @@ export async function runInstall(
     scope: parsed.scope,
     installSource: parsed.profilePath,
   });
+
+  if (json) {
+    emitJson(options.stdout, "install", result.ok, {
+      dryRun: result.dryRun,
+      writes: result.writes,
+      conflicts: result.conflicts,
+      skipped: result.skipped,
+      backups: result.backups,
+      missingSecrets: result.missingSecrets,
+      errors: result.errors,
+    });
+    return result.exitCode;
+  }
 
   if (!result.ok) {
     // Failure report explains the error — always shown, even with --quiet.

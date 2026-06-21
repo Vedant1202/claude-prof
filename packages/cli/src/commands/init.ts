@@ -9,7 +9,7 @@ import {
   validateProfile,
 } from "@cprof/core";
 
-import { parseCommonFlags } from "../command-utils.js";
+import { emitJson, parseCommonFlags } from "../command-utils.js";
 
 export interface InitCommandOptions {
   readonly cwd: string;
@@ -22,7 +22,7 @@ export async function runInit(
   flags: readonly string[],
   options: InitCommandOptions,
 ): Promise<number> {
-  const { quiet, rest } = parseCommonFlags(flags);
+  const { json, quiet, rest } = parseCommonFlags(flags);
   const parsed = parseInitFlags(rest);
 
   if (parsed.valid === false) {
@@ -43,7 +43,11 @@ export async function runInit(
   const validation = validateProfile(manifest);
 
   if (!validation.valid) {
-    options.stderr.write(`${validation.errors.join("\n")}\n`);
+    if (json) {
+      emitJson(options.stdout, "init", false, { errors: validation.errors });
+    } else {
+      options.stderr.write(`${validation.errors.join("\n")}\n`);
+    }
     return validation.exitCode;
   }
 
@@ -51,9 +55,15 @@ export async function runInit(
     const leakedPaths = [
       ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
     ];
-    options.stderr.write(
-      `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
-    );
+    if (json) {
+      emitJson(options.stdout, "init", false, {
+        leakCheck: { ok: false, leaks: scan.leakCheck.leaks },
+      });
+    } else {
+      options.stderr.write(
+        `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
+      );
+    }
     return 3;
   }
 
@@ -73,7 +83,14 @@ export async function runInit(
     "utf8",
   );
 
-  if (!quiet) {
+  if (json) {
+    emitJson(options.stdout, "init", true, {
+      profilePath: "claude-profile.json",
+      profileScope: manifest.profileScope,
+      includesGlobal: manifest.includesGlobal,
+      leakCheck: { ok: true, leaks: [] },
+    });
+  } else if (!quiet) {
     options.stderr.write(
       `Wrote claude-profile.json (${manifest.profileScope}${
         manifest.includesGlobal ? " + global" : ""
