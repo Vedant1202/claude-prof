@@ -10,6 +10,7 @@ describe("command registry", () => {
       "install",
       "validate",
       "diff",
+      "scan",
       "profiles",
     ]);
   });

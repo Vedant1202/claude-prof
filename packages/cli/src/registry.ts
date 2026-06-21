@@ -3,6 +3,7 @@ import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
 import { runProfiles } from "./commands/profiles.js";
 import { runRefresh } from "./commands/refresh.js";
+import { runScan } from "./commands/scan.js";
 import { runValidate } from "./commands/validate.js";
 
 export type CommandWriter = Pick<NodeJS.WriteStream, "write">;
@@ -139,6 +140,29 @@ export const COMMANDS: readonly Command[] = [
     ].join("\n"),
     run: (flags, context) =>
       runDiff(flags, {
+        cwd: context.cwd,
+        stdout: context.stdout,
+        stderr: context.stderr,
+      }),
+  },
+  {
+    name: "scan",
+    synopsis: "scan <file...>",
+    summary: "Scan files for secrets (a standalone leak gate)",
+    usage: [
+      "Usage: cprof scan [--json] [--quiet] <file...>",
+      "",
+      "Scan one or more files for secrets using the same engine that gates init and",
+      "install output. Exits 3 if a secret is found, 0 when clean, 2 if a file is",
+      "missing. Detection has the same strengths and limits as redaction — it is",
+      "best-effort, not a guarantee.",
+      "",
+      "Options:",
+      "  --json    Emit findings as JSON",
+      "  --quiet   Suppress the summary line (rely on the exit code)",
+    ].join("\n"),
+    run: (flags, context) =>
+      runScan(flags, {
         cwd: context.cwd,
         stdout: context.stdout,
         stderr: context.stderr,
