@@ -2,11 +2,8 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
 import {
-  checkInstalledProfileUpdates,
   loadInstalledProfileState,
-  loadProfileRegistry,
   type InstalledProfileRecord,
-  type ProfileUpdateStatus,
 } from "@cprof/core";
 
 export interface ProfilesCommandOptions {
@@ -18,10 +15,8 @@ export interface ProfilesCommandOptions {
 
 interface ParsedProfilesFlags {
   readonly valid: true;
-  readonly action: "list" | "outdated";
   readonly global: boolean;
   readonly json: boolean;
-  readonly registryPath?: string;
 }
 
 export async function runProfiles(
@@ -39,30 +34,7 @@ export async function runProfiles(
     statePath(options.cwd, options.homeDir ?? homedir(), parsed.global),
   );
 
-  if (parsed.action === "list") {
-    options.stdout.write(formatInstalls(state.installs, parsed.json));
-    return 0;
-  }
-
-  const registryPath = parsed.registryPath;
-
-  if (registryPath === undefined) {
-    options.stderr.write("profiles outdated requires a registry path\n");
-    return 1;
-  }
-
-  const registry = await loadProfileRegistry(
-    resolve(options.cwd, registryPath),
-  );
-
-  if (!registry.ok) {
-    options.stderr.write(`${registry.errors.join("\n")}\n`);
-    return registry.exitCode;
-  }
-
-  const updates = checkInstalledProfileUpdates(state, registry.registry);
-  options.stdout.write(formatUpdates(updates, parsed.json));
-
+  options.stdout.write(formatInstalls(state.installs, parsed.json));
   return 0;
 }
 
@@ -82,26 +54,17 @@ function parseProfilesFlags(flags: readonly string[]): ParseProfilesResult {
     return { valid: false, error: `unknown profiles flag: ${unknownFlag}` };
   }
 
-  const [action, registryPath, extra] = positional;
+  const [action, extra] = positional;
 
-  if (!["list", "outdated"].includes(action ?? "")) {
-    return {
-      valid: false,
-      error: "profiles requires action: list or outdated",
-    };
+  if (action !== "list") {
+    return { valid: false, error: "profiles requires action: list" };
   }
 
   if (extra !== undefined) {
     return { valid: false, error: `unexpected profiles argument: ${extra}` };
   }
 
-  return {
-    valid: true,
-    action: action as "list" | "outdated",
-    global,
-    json,
-    registryPath,
-  };
+  return { valid: true, global, json };
 }
 
 function statePath(cwd: string, homeDir: string, global: boolean): string {
@@ -123,28 +86,6 @@ function formatInstalls(
   }
 
   return `${installs.map(formatInstallLine).join("\n")}\n`;
-}
-
-function formatUpdates(
-  updates: readonly ProfileUpdateStatus[],
-  json: boolean,
-): string {
-  if (json) {
-    return `${JSON.stringify({ updates }, null, 2)}\n`;
-  }
-
-  if (updates.length === 0) {
-    return "No installed profiles recorded.\n";
-  }
-
-  return `${updates
-    .map(
-      (update) =>
-        `${update.installed.name} ${update.installed.version} -> ${
-          update.latestVersion ?? "unknown"
-        } (${update.status})`,
-    )
-    .join("\n")}\n`;
 }
 
 function formatInstallLine(install: InstalledProfileRecord): string {

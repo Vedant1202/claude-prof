@@ -54,44 +54,6 @@ describe("cprof profiles", () => {
     ).resolves.toContain("Team Base");
   });
 
-  it("checks outdated profiles against a registry", async () => {
-    await writeProfile(
-      buildManifest({
-        name: "Team Base",
-        version: "1.0.0",
-        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
-        settings: { model: "sonnet" },
-      }),
-    );
-    await writeRegistry();
-
-    await main(["install", "github:team/base"], {
-      cwd: targetDir,
-      homeDir,
-      remoteCacheRoot: tempDir,
-      fetcher: async () => ({
-        ok: true,
-        status: 200,
-        statusText: "OK",
-        async text() {
-          return readFile(join(profileDir, "claude-profile.json"), "utf8");
-        },
-      }),
-    });
-    const stdout = createWritable();
-
-    await expect(
-      main(["profiles", "outdated", join(tempDir, "registry.json")], {
-        cwd: targetDir,
-        homeDir,
-        stdout,
-      }),
-    ).resolves.toBe(0);
-
-    expect(stdout.output).toContain("Team Base 1.0.0 -> 1.1.0");
-    expect(stdout.output).toContain("update-available");
-  });
-
   it("lists global installed state with --global", async () => {
     await writeProfile(
       buildManifest({
@@ -137,28 +99,6 @@ async function writeProfile(profile: unknown): Promise<void> {
   await writeFile(
     join(profileDir, "claude-profile.json"),
     `${JSON.stringify(profile, null, 2)}\n`,
-    "utf8",
-  );
-}
-
-async function writeRegistry(): Promise<void> {
-  await writeFile(
-    join(tempDir, "registry.json"),
-    `${JSON.stringify(
-      {
-        version: 1,
-        profiles: [
-          {
-            id: "team/base",
-            name: "Team Base",
-            version: "1.1.0",
-            source: "github:team/base",
-          },
-        ],
-      },
-      null,
-      2,
-    )}\n`,
     "utf8",
   );
 }

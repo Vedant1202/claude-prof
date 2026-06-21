@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
-  checkInstalledProfileUpdates,
   loadInstalledProfileState,
   recordInstalledProfile,
 } from "../src/state.js";
@@ -56,55 +55,5 @@ describe("installed profile state", () => {
     expect(state.installs).toHaveLength(1);
     expect(state.installs[0]?.version).toBe("1.1.0");
     await expect(readFile(path, "utf8")).resolves.toContain("github:team/base");
-  });
-
-  it("checks installed profiles against registry versions", () => {
-    const updates = checkInstalledProfileUpdates(
-      {
-        version: 1,
-        installs: [
-          {
-            name: "Team Base",
-            version: "1.0.0",
-            source: "github:team/base",
-            target: "project",
-            profileScope: "project",
-            includesGlobal: false,
-            installedAt: "2026-05-23T00:00:00.000Z",
-          },
-          {
-            name: "Solo Minimal",
-            version: "1.0.0",
-            source: "https://example.com/minimal.json",
-            target: "project",
-            profileScope: "project",
-            includesGlobal: false,
-            installedAt: "2026-05-23T00:00:00.000Z",
-          },
-        ],
-      },
-      {
-        version: 1,
-        profiles: [
-          {
-            id: "team/base",
-            name: "Team Base",
-            version: "1.1.0",
-            source: "github:team/base",
-          },
-          {
-            id: "solo/minimal",
-            name: "Solo Minimal",
-            version: "1.0.0",
-            source: "https://example.com/minimal.json",
-          },
-        ],
-      },
-    );
-
-    expect(updates.map((update) => update.status)).toEqual([
-      "up-to-date",
-      "update-available",
-    ]);
   });
 });
