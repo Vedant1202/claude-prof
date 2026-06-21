@@ -54,6 +54,15 @@ const config: Config = {
     ],
   ],
 
+  // Offline/local search — builds a static index at build time (no Algolia
+  // account, works on GitHub Pages). Adds a search box to the navbar.
+  themes: [
+    [
+      "@easyops-cn/docusaurus-search-local",
+      { hashed: true, indexBlog: false, language: ["en"] },
+    ],
+  ],
+
   themeConfig: {
     image: "img/docusaurus-social-card.jpg",
     // Site-wide alpha flag. announcementBar is the right tool for a persistent,
