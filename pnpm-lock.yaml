@@ -26,6 +26,9 @@ importers:
       '@cprof/core':
         specifier: workspace:*
         version: link:../core
+      '@cprof/schema':
+        specifier: workspace:*
+        version: link:../schema
     devDependencies:
       vitest:
         specifier: ^3.2.4
