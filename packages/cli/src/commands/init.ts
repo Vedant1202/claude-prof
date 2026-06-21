@@ -9,6 +9,8 @@ import {
   validateProfile,
 } from "@cprof/core";
 
+import { parseCommonFlags } from "../command-utils.js";
+
 export interface InitCommandOptions {
   readonly cwd: string;
   readonly homeDir?: string;
@@ -20,7 +22,8 @@ export async function runInit(
   flags: readonly string[],
   options: InitCommandOptions,
 ): Promise<number> {
-  const parsed = parseInitFlags(flags);
+  const { quiet, rest } = parseCommonFlags(flags);
+  const parsed = parseInitFlags(rest);
 
   if (parsed.valid === false) {
     options.stderr.write(`${parsed.error}\n`);
@@ -70,11 +73,13 @@ export async function runInit(
     "utf8",
   );
 
-  options.stdout.write(
-    `Wrote claude-profile.json (${manifest.profileScope}${
-      manifest.includesGlobal ? " + global" : ""
-    })\n`,
-  );
+  if (!quiet) {
+    options.stderr.write(
+      `Wrote claude-profile.json (${manifest.profileScope}${
+        manifest.includesGlobal ? " + global" : ""
+      })\n`,
+    );
+  }
 
   return 0;
 }

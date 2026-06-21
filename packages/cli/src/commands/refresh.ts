@@ -9,7 +9,11 @@ import {
   validateProfile,
 } from "@cprof/core";
 
-import { readProfileFile, type CommandWriter } from "../command-utils.js";
+import {
+  parseCommonFlags,
+  readProfileFile,
+  type CommandWriter,
+} from "../command-utils.js";
 
 export interface RefreshCommandOptions {
   readonly cwd: string;
@@ -22,8 +26,10 @@ export async function runRefresh(
   flags: readonly string[],
   options: RefreshCommandOptions,
 ): Promise<number> {
-  if (flags.length > 0) {
-    options.stderr.write(`unknown refresh flag: ${flags[0]}\n`);
+  const { quiet, rest } = parseCommonFlags(flags);
+
+  if (rest.length > 0) {
+    options.stderr.write(`unknown refresh flag: ${rest[0]}\n`);
     return 1;
   }
 
@@ -83,6 +89,8 @@ export async function runRefresh(
     "utf8",
   );
 
-  options.stdout.write("Refreshed claude-profile.json\n");
+  if (!quiet) {
+    options.stderr.write("Refreshed claude-profile.json\n");
+  }
   return 0;
 }

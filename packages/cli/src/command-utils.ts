@@ -5,6 +5,38 @@ import type { CprofProfile } from "@cprof/schema";
 
 export type CommandWriter = Pick<NodeJS.WriteStream, "write">;
 
+export interface CommonFlags {
+  /** `--json`: emit machine-readable output on stdout. */
+  readonly json: boolean;
+  /** `--quiet`/`-q`: suppress non-essential status output (never errors). */
+  readonly quiet: boolean;
+  /** The flags left after the common ones are removed. */
+  readonly rest: readonly string[];
+}
+
+/**
+ * Pull the cross-command flags (`--json`, `--quiet`/`-q`) out of a command's
+ * argv so each command can parse its own positionals/flags from `rest` without
+ * re-implementing — or tripping over — the shared ones.
+ */
+export function parseCommonFlags(flags: readonly string[]): CommonFlags {
+  let json = false;
+  let quiet = false;
+  const rest: string[] = [];
+
+  for (const flag of flags) {
+    if (flag === "--json") {
+      json = true;
+    } else if (flag === "--quiet" || flag === "-q") {
+      quiet = true;
+    } else {
+      rest.push(flag);
+    }
+  }
+
+  return { json, quiet, rest };
+}
+
 export type ReadProfileFileResult =
   | { readonly ok: true; readonly profile: CprofProfile }
   | {
