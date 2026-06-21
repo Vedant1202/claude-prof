@@ -1,7 +1,5 @@
-import {
-  shouldRedactString,
-  type RedactionReason,
-} from "./redactor.js";
+import { detectProviderSecret } from "./detector.js";
+import { shouldRedactString, type RedactionReason } from "./redactor.js";
 
 export interface GeneratedOutput {
   readonly path: string;
@@ -21,10 +19,12 @@ export interface LeakCheckResult {
 
 const TOKEN_PATTERN = /[A-Za-z0-9_./+=:-]{12,}/g;
 
-export function checkGeneratedOutputForLeaks(
+export async function checkGeneratedOutputForLeaks(
   outputs: readonly GeneratedOutput[],
-): LeakCheckResult {
-  const leaks = outputs.flatMap((output) => findLeaks(output));
+): Promise<LeakCheckResult> {
+  const leaks = (
+    await Promise.all(outputs.map((output) => findLeaks(output)))
+  ).flat();
 
   return {
     ok: leaks.length === 0,
@@ -32,20 +32,23 @@ export function checkGeneratedOutputForLeaks(
   };
 }
 
-function findLeaks(output: GeneratedOutput): OutputLeak[] {
+async function findLeaks(output: GeneratedOutput): Promise<OutputLeak[]> {
   const leaks: OutputLeak[] = [];
-  const tokens = output.contents.matchAll(TOKEN_PATTERN);
 
-  for (const [tokenIndex, match] of [...tokens].entries()) {
+  // Independent engine: secretlint scans the whole output for provider keys.
+  if (await detectProviderSecret(output.contents)) {
+    leaks.push({ path: output.path, tokenIndex: -1, reason: "known-pattern" });
+  }
+
+  // Generic token scan for key-name / JWT / high-entropy leaks.
+  const tokens = [...output.contents.matchAll(TOKEN_PATTERN)];
+
+  for (const [tokenIndex, match] of tokens.entries()) {
     const token = match[0];
     const reason = shouldRedactString(stripJsonPunctuation(token), ["value"]);
 
     if (reason !== undefined) {
-      leaks.push({
-        path: output.path,
-        tokenIndex,
-        reason,
-      });
+      leaks.push({ path: output.path, tokenIndex, reason });
     }
   }
 

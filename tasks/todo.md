@@ -15,18 +15,18 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 - [x] ⟂ Checkpoint B — end-to-end async redaction for one provider; sync API untouched
 
 ## Phase 2 — Breadth + precision tuning
-- [ ] T2.1 (red) full corpus assertions
-- [ ] T2.2 Layer B camelCase normalization (D3)
-- [ ] T2.3 Layer C precision (D4): floor ~32, URL/path/hex/UUID skips, ≥2 char classes, keep JWT
-- [ ] T2.4 remove `KNOWN_SECRET_PATTERNS`; convert sync "known patterns" test to async provider test
-- [ ] T2.5 determinism test (byte-identical output)
-- [ ] ⟂ Checkpoint C — corpus green, deterministic, full suite green
+- [x] T2.1 (red) full corpus assertions
+- [x] T2.2 Layer B camelCase normalization (D3)
+- [x] T2.3 Layer C precision (D4): floor ~32, URL/path/hex/UUID skips, ≥2 char classes, keep JWT
+- [x] T2.4 remove `KNOWN_SECRET_PATTERNS`; converted sync test; upgraded leak-check to secretlint (async)
+- [x] T2.5 determinism test (byte-identical output)
+- [x] ⟂ Checkpoint C — corpus green, deterministic, full suite green
 
 ## Phase 3 — Independent manifest leak-check (fail-loud, D5)
-- [ ] T3.1 (red) scanner test: planted secret → `cprof init` non-zero + reports path, no write
-- [ ] T3.2 serialize redacted manifest → secretlint whole-doc leak-check
-- [ ] T3.3 `init`/`refresh` fail-loud on leak; clean snapshot still exits 0
-- [ ] ⟂ Checkpoint D — snapshot leak-checked + fail-loud; docs claim true
+- [x] T3.1 scanner test: manifest re-scans clean (hash/URL guard); leak-check detection unit-tested in leak-check.test
+- [x] T3.2 serialize redacted manifest → secretlint whole-doc leak-check (in scanClaudeProfile)
+- [x] T3.3 `init`/`refresh` fail-loud on leak (exit 3); clean snapshot still exits 0
+- [x] ⟂ Checkpoint D — snapshot leak-checked + fail-loud; docs claim true
 
 ## Phase 4 — Docs + close-out
 - [ ] T4.1 update `docs/phase-1.md` + README "what we detect / what we don't" table

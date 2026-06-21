@@ -91,7 +91,7 @@ export async function installProfile(
     });
   }
 
-  const leakCheck = checkGeneratedOutputForLeaks(
+  const leakCheck = await checkGeneratedOutputForLeaks(
     plan.writes
       .filter((write) => !write.contents.includes("${env:"))
       .map((write) => ({ path: write.path, contents: write.contents })),

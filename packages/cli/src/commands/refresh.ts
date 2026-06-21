@@ -57,6 +57,16 @@ export async function runRefresh(
     return validation.exitCode;
   }
 
+  if (!scan.leakCheck.ok) {
+    const leakedPaths = [
+      ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
+    ];
+    options.stderr.write(
+      `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
+    );
+    return 3;
+  }
+
   await writeFile(
     profilePath,
     `${JSON.stringify(refreshed, null, 2)}\n`,

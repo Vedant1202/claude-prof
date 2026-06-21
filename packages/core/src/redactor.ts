@@ -29,14 +29,6 @@ export interface RedactionResult {
 const SENSITIVE_KEY_PATTERN =
   /(^|_|-)(api[_-]?key|auth|authorization|credential|key|password|secret|token)(_|-|$)/i;
 
-const KNOWN_SECRET_PATTERNS = [
-  /sk-[A-Za-z0-9_-]{16,}/,
-  /gh[pousr]_[A-Za-z0-9_]{20,}/,
-  /ghs_[A-Za-z0-9_]{20,}/,
-  /xox[baprs]-[A-Za-z0-9-]{16,}/,
-  /AKIA[0-9A-Z]{16}/,
-] as const;
-
 const ENV_PLACEHOLDER_PATTERN = /^\$\{env:[A-Za-z_][A-Za-z0-9_]*}$/;
 const JWT_PATTERN =
   /^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$/;
@@ -67,6 +59,9 @@ export async function redactSecretsAsync(
     collectStrings(value, []),
     PROVIDER_SCAN_CONCURRENCY,
     async (entry) => {
+      if (isStructuralManifestPath(entry.path)) {
+        return; // never scan manifest scaffolding ($schema, version, hashes)
+      }
       if (shouldRedactString(entry.value, entry.path) !== undefined) {
         return; // already covered by Layer B/C — skip the secretlint call
       }
@@ -158,12 +153,10 @@ export function shouldRedactString(
     return undefined;
   }
 
-  if (keyPath.some((key) => SENSITIVE_KEY_PATTERN.test(key))) {
+  // Provider-key detection (the old hand-rolled prefix list) now lives in
+  // detector.ts (secretlint, Layer A) and runs in the async redaction path.
+  if (keyPath.some((key) => SENSITIVE_KEY_PATTERN.test(normalizeKey(key)))) {
     return "key-name";
-  }
-
-  if (KNOWN_SECRET_PATTERNS.some((pattern) => pattern.test(value))) {
-    return "known-pattern";
   }
 
   if (JWT_PATTERN.test(value)) {
@@ -252,13 +245,25 @@ function formatPath(path: readonly string[]): string {
   return path.length === 0 ? "/" : `/${path.join("/")}`;
 }
 
+function normalizeKey(key: string): string {
+  // Split camelCase so "dbPassword" -> "db_password" exposes the keyword
+  // boundary the sensitive-key pattern looks for.
+  return key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+}
+
 function isHighEntropy(value: string): boolean {
+  // Precision guards: secretlint (Layer A) covers known provider keys, so the
+  // entropy heuristic can lean conservative and skip values that merely look
+  // random — URLs, paths, hashes, and UUIDs — while still catching base64-ish
+  // secrets that contain "/".
   if (
     value.length < 32 ||
     /\s/.test(value) ||
-    value.includes("://") ||
-    value.includes("/") ||
-    value.includes("@")
+    looksLikeUrlOrPath(value) ||
+    isHexBlob(value) ||
+    isPrefixedHash(value) ||
+    isUuid(value) ||
+    characterClassCount(value) < 2
   ) {
     return false;
   }
@@ -271,6 +276,39 @@ function isHighEntropy(value: string): boolean {
   }, 0);
 
   return uniqueCharacters >= 16 && entropy >= 4;
+}
+
+function looksLikeUrlOrPath(value: string): boolean {
+  return (
+    value.includes("://") ||
+    value.includes("@") ||
+    /^(?:[A-Za-z]:[\\/]|\.{0,2}\/|~\/)/.test(value) ||
+    /\/[^/]*\.[A-Za-z0-9]{1,8}$/.test(value)
+  );
+}
+
+function isHexBlob(value: string): boolean {
+  return value.length >= 32 && /^[0-9a-fA-F]+$/.test(value);
+}
+
+function isPrefixedHash(value: string): boolean {
+  // Content digests like "sha256:<hex>" are not secrets — they appear verbatim
+  // in the manifest's asset entries and must not trip the leak-check.
+  return /^[A-Za-z0-9]+:[0-9a-fA-F]{32,}$/.test(value);
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+    value,
+  );
+}
+
+function characterClassCount(value: string): number {
+  let count = 0;
+  if (/[a-z]/.test(value)) count += 1;
+  if (/[A-Z]/.test(value)) count += 1;
+  if (/[0-9]/.test(value)) count += 1;
+  return count;
 }
 
 function countOccurrences(value: string, character: string): number {
