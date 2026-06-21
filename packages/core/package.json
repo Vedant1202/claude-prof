@@ -30,8 +30,7 @@
     "dist"
   ],
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
