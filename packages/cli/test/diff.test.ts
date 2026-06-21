@@ -82,7 +82,24 @@ describe("cprof diff", () => {
     expect(JSON.parse(stdout.output)).toMatchObject({
       command: "diff",
       ok: true,
+      equal: false,
       entries: [{ kind: "added", path: "/commands/deploy" }],
+    });
+  });
+
+  it("reports equal:true in --json for identical profiles", async () => {
+    await writeProfile("a.json", { name: "same" });
+    await writeProfile("b.json", { name: "same" });
+    const stdout = createWritable();
+
+    await expect(
+      main(["diff", "--json", "a.json", "b.json"], { cwd: tempDir, stdout }),
+    ).resolves.toBe(0);
+
+    expect(JSON.parse(stdout.output)).toMatchObject({
+      command: "diff",
+      ok: true,
+      equal: true,
     });
   });
 });
