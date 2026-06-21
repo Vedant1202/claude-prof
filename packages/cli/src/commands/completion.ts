@@ -33,9 +33,9 @@ function isShell(value: string): value is Shell {
   return (SHELLS as readonly string[]).includes(value);
 }
 
-/** Command names that can follow `cprof`, including the help meta-command. */
+/** Command names that can follow `cprof`. */
 function commandNames(): readonly string[] {
-  return [...COMMANDS.map((command) => command.name), "help"];
+  return COMMANDS.map((command) => command.name);
 }
 
 function flagsFor(name: string): readonly string[] {
@@ -93,7 +93,6 @@ _cprof() {
   local -a commands
   commands=(
 ${describe}
-    'help:Show help for a command'
   )
   if (( CURRENT == 2 )); then
     _describe -t commands 'cprof command' commands
