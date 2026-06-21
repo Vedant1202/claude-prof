@@ -33,11 +33,10 @@ export function validateProfile(value: unknown): ProfileValidationResult {
   return {
     valid: false,
     exitCode: 1,
-    errors:
-      validate.errors?.map((error: ErrorObject) => {
-        const location = error.instancePath || "/";
-        return `${location} ${error.message ?? "is invalid"}`;
-      }) ?? ["profile is invalid"],
+    errors: validate.errors?.map((error: ErrorObject) => {
+      const location = error.instancePath || "/";
+      return `${location} ${error.message ?? "is invalid"}`;
+    }) ?? ["profile is invalid"],
   };
 }
 

@@ -22,9 +22,9 @@ afterEach(async () => {
 
 describe("isRemoteProfileReference", () => {
   it("detects supported remote references", () => {
-    expect(isRemoteProfileReference("https://example.com/claude-profile.json")).toBe(
-      true,
-    );
+    expect(
+      isRemoteProfileReference("https://example.com/claude-profile.json"),
+    ).toBe(true);
     expect(isRemoteProfileReference("github:owner/repo")).toBe(true);
     expect(isRemoteProfileReference("./claude-profile.json")).toBe(false);
   });
@@ -32,7 +32,10 @@ describe("isRemoteProfileReference", () => {
 
 describe("fetchProfileReference", () => {
   it("fetches https profile references into a temp profile file", async () => {
-    const fetcher = createFetcher("https://example.com/claude-profile.json", "{}");
+    const fetcher = createFetcher(
+      "https://example.com/claude-profile.json",
+      "{}",
+    );
 
     const result = await fetchProfileReference({
       reference: "https://example.com/claude-profile.json",
@@ -110,11 +113,7 @@ function createFetcher(
   };
 }
 
-function createResponse(
-  status: number,
-  contents: string,
-  statusText = "OK",
-) {
+function createResponse(status: number, contents: string, statusText = "OK") {
   return {
     ok: status >= 200 && status < 300,
     status,

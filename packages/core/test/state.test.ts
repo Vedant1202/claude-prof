@@ -22,7 +22,9 @@ afterEach(async () => {
 
 describe("installed profile state", () => {
   it("loads empty state when no state file exists", async () => {
-    await expect(loadInstalledProfileState(join(tempDir, ".cprof-state.json"))).resolves.toEqual({
+    await expect(
+      loadInstalledProfileState(join(tempDir, ".cprof-state.json")),
+    ).resolves.toEqual({
       version: 1,
       installs: [],
     });

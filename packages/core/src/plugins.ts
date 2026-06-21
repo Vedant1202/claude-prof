@@ -44,12 +44,10 @@ export async function readInstalledPlugins(
 
   return Object.fromEntries(
     Object.entries(plugins)
-      .map(
-        ([name, entries]): readonly [string, PluginMetadata] => [
-          name,
-          toPluginMetadata(name, entries, marketplaces),
-        ],
-      )
+      .map(([name, entries]): readonly [string, PluginMetadata] => [
+        name,
+        toPluginMetadata(name, entries, marketplaces),
+      ])
       .sort(([left], [right]) => left.localeCompare(right)),
   );
 }
@@ -72,7 +70,8 @@ function toPluginMetadata(
   marketplaces: KnownMarketplacesFile,
 ): PluginMetadata {
   const marketplace = parseMarketplaceName(name);
-  const entry = entries.find((candidate) => candidate.scope === "user") ?? entries[0];
+  const entry =
+    entries.find((candidate) => candidate.scope === "user") ?? entries[0];
   const marketplaceSource = marketplaces[marketplace]?.source;
 
   return {
@@ -85,7 +84,9 @@ function toPluginMetadata(
 }
 
 function parseMarketplaceName(pluginName: string): string {
-  return pluginName.includes("@") ? pluginName.split("@").at(-1) ?? pluginName : pluginName;
+  return pluginName.includes("@")
+    ? (pluginName.split("@").at(-1) ?? pluginName)
+    : pluginName;
 }
 
 function formatMarketplaceSource(

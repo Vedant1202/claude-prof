@@ -73,7 +73,11 @@ async function resolveProfilePath(
   options: InstallCommandOptions,
 ): Promise<
   | { readonly ok: true; readonly path: string }
-  | { readonly ok: false; readonly exitCode: 1 | 2; readonly errors: readonly string[] }
+  | {
+      readonly ok: false;
+      readonly exitCode: 1 | 2;
+      readonly errors: readonly string[];
+    }
 > {
   if (!isRemoteProfileReference(profilePath)) {
     return { ok: true, path: resolve(options.cwd, profilePath) };

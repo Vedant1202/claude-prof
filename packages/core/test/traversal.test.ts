@@ -69,7 +69,10 @@ describe("collectSafePaths", () => {
       try {
         await symlink(join(outsideDir, "secret.txt"), join(tempDir, "escape"));
       } catch (error) {
-        if (isNodeError(error) && ["EACCES", "EPERM"].includes(error.code ?? "")) {
+        if (
+          isNodeError(error) &&
+          ["EACCES", "EPERM"].includes(error.code ?? "")
+        ) {
           return;
         }
 

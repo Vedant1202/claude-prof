@@ -51,7 +51,9 @@ export async function runProfiles(
     return 1;
   }
 
-  const registry = await loadProfileRegistry(resolve(options.cwd, registryPath));
+  const registry = await loadProfileRegistry(
+    resolve(options.cwd, registryPath),
+  );
 
   if (!registry.ok) {
     options.stderr.write(`${registry.errors.join("\n")}\n`);
@@ -71,7 +73,9 @@ type ParseProfilesResult =
 function parseProfilesFlags(flags: readonly string[]): ParseProfilesResult {
   const global = flags.includes("--global");
   const json = flags.includes("--json");
-  const positional = flags.filter((flag) => flag !== "--global" && flag !== "--json");
+  const positional = flags.filter(
+    (flag) => flag !== "--global" && flag !== "--json",
+  );
   const unknownFlag = positional.find((flag) => flag.startsWith("--"));
 
   if (unknownFlag !== undefined) {
@@ -81,7 +85,10 @@ function parseProfilesFlags(flags: readonly string[]): ParseProfilesResult {
   const [action, registryPath, extra] = positional;
 
   if (!["list", "outdated"].includes(action ?? "")) {
-    return { valid: false, error: "profiles requires action: list or outdated" };
+    return {
+      valid: false,
+      error: "profiles requires action: list or outdated",
+    };
   }
 
   if (extra !== undefined) {

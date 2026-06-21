@@ -46,3 +46,6 @@ jobs:
 
       - name: Lint
         run: corepack pnpm lint
+
+      - name: Format
+        run: corepack pnpm format

@@ -35,7 +35,11 @@ export interface PolicyCheckResult {
 
 export type PolicyLoadResult =
   | { readonly ok: true; readonly policy: TeamPolicy }
-  | { readonly ok: false; readonly exitCode: 1 | 2; readonly errors: readonly string[] };
+  | {
+      readonly ok: false;
+      readonly exitCode: 1 | 2;
+      readonly errors: readonly string[];
+    };
 
 const POLICY_SECTIONS = [
   "settings",
@@ -75,7 +79,9 @@ export async function loadTeamPolicy(path: string): Promise<PolicyLoadResult> {
     return {
       ok: false,
       exitCode: 1,
-      errors: [error instanceof Error ? error.message : "policy JSON is invalid"],
+      errors: [
+        error instanceof Error ? error.message : "policy JSON is invalid",
+      ],
     };
   }
 }
@@ -108,7 +114,11 @@ function validatePolicy(value: unknown): readonly string[] {
     errors.push("/version must be 1");
   }
 
-  for (const field of ["allowedSections", "blockedSections", "requiredSections"]) {
+  for (const field of [
+    "allowedSections",
+    "blockedSections",
+    "requiredSections",
+  ]) {
     const sectionValue = value[field];
 
     if (sectionValue === undefined) {
@@ -144,9 +154,15 @@ function checkGlobalPolicy(
     return [];
   }
 
-  const hasGlobalSource = profile.sources.some((source) => source.scope === "global");
+  const hasGlobalSource = profile.sources.some(
+    (source) => source.scope === "global",
+  );
 
-  if (profile.profileScope !== "global" && !profile.includesGlobal && !hasGlobalSource) {
+  if (
+    profile.profileScope !== "global" &&
+    !profile.includesGlobal &&
+    !hasGlobalSource
+  ) {
     return [];
   }
 
@@ -240,7 +256,10 @@ function presentSections(profile: CprofProfile): readonly PolicySection[] {
   });
 }
 
-function findPrivatePaths(value: unknown, path: readonly string[] = []): string[] {
+function findPrivatePaths(
+  value: unknown,
+  path: readonly string[] = [],
+): string[] {
   if (Array.isArray(value)) {
     return value.flatMap((item, index) =>
       findPrivatePaths(item, [...path, String(index)]),
@@ -263,7 +282,10 @@ function findPrivatePaths(value: unknown, path: readonly string[] = []): string[
 }
 
 function isPolicySection(value: unknown): value is PolicySection {
-  return typeof value === "string" && POLICY_SECTIONS.includes(value as PolicySection);
+  return (
+    typeof value === "string" &&
+    POLICY_SECTIONS.includes(value as PolicySection)
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

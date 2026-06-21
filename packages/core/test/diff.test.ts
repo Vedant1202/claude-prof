@@ -54,7 +54,12 @@ describe("formatProfileDiff", () => {
     expect(
       formatProfileDiff({
         entries: [
-          { kind: "changed", path: "/version", before: "1.0.0", after: "1.0.1" },
+          {
+            kind: "changed",
+            path: "/version",
+            before: "1.0.0",
+            after: "1.0.1",
+          },
         ],
       }),
     ).toBe("~ /version: 1.0.0 -> 1.0.1\n");
