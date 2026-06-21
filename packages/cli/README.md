@@ -1,6 +1,6 @@
 # cprof
 
-[![npm](https://img.shields.io/npm/v/cprof/alpha?label=npm%40alpha)](https://www.npmjs.com/package/cprof)
+[![npm](https://img.shields.io/npm/v/@cprof/cli/alpha?label=npm%40alpha)](https://www.npmjs.com/package/@cprof/cli)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Vedant1202/claude-prof/blob/main/LICENSE)
 
 Snapshot, scrub, and migrate your Claude Code setup as a redacted, portable profile.
@@ -18,11 +18,12 @@ offline and never executes hook or plugin code.
 ## Install
 
 ```bash
-npm install -g cprof@alpha
+npm install -g @cprof/cli@alpha
 # or run it without installing:
-npx cprof@alpha --help
+npx @cprof/cli@alpha --help
 ```
 
+The npm package is **`@cprof/cli`**; the installed command is **`cprof`**.
 Requires Node.js >= 22.
 
 ## Quickstart

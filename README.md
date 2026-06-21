@@ -5,7 +5,7 @@
 **Snapshot, scrub, and migrate your Claude Code setup as a redacted, portable profile.**
 
 [![CI](https://github.com/Vedant1202/claude-prof/actions/workflows/ci.yml/badge.svg)](https://github.com/Vedant1202/claude-prof/actions/workflows/ci.yml)
-[![npm @alpha](https://img.shields.io/npm/v/cprof/alpha?label=npm%40alpha)](https://www.npmjs.com/package/cprof)
+[![npm @alpha](https://img.shields.io/npm/v/@cprof/cli/alpha?label=npm%40alpha)](https://www.npmjs.com/package/@cprof/cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node >=22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
 
@@ -42,11 +42,12 @@ runs fully offline and never executes hook or plugin code.
 ## Install
 
 ```bash
-npm install -g cprof@alpha
+npm install -g @cprof/cli@alpha
 # …or run it without installing:
-npx cprof@alpha --help
+npx @cprof/cli@alpha --help
 ```
 
+The npm package is **`@cprof/cli`**; the installed command is **`cprof`**.
 Requires **Node.js >= 22**. Prefer to build from source? See
 [Development](#development).
 
@@ -141,7 +142,7 @@ corepack pnpm format    # prettier --check
 Run the CLI from source:
 
 ```bash
-corepack pnpm --filter cprof build
+corepack pnpm --filter @cprof/cli build
 node packages/cli/dist/index.js --help
 ```
 
@@ -149,7 +150,7 @@ node packages/cli/dist/index.js --help
 
 | Package          | Purpose                                                                |
 | ---------------- | ---------------------------------------------------------------------- |
-| `cprof`          | The CLI and command dispatch                                           |
+| `@cprof/cli`     | The CLI — installs the `cprof` command                                 |
 | `@cprof/core`    | Scanning, redaction, manifest, bundling, validation, install, and diff |
 | `@cprof/schema`  | The `claude-profile.json` JSON Schema and TypeScript types             |
 | `@cprof/testing` | Internal fixtures and test helpers (not published)                     |

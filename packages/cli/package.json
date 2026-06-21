@@ -1,5 +1,5 @@
 {
-  "name": "cprof",
+  "name": "@cprof/cli",
   "version": "0.0.1-alpha.0",
   "description": "Local-first CLI to snapshot, scrub, and migrate your Claude Code setup as a redacted, portable profile.",
   "license": "MIT",

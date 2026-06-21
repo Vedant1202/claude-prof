@@ -7,7 +7,7 @@ profiles it produces.
 This is an internal building block of the `cprof` CLI:
 
 ```bash
-npm install -g cprof@alpha
+npm install -g @cprof/cli@alpha
 ```
 
 Docs: https://vedant1202.github.io/claude-prof/ · License: MIT
