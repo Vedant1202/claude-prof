@@ -1,12 +1,37 @@
 {
   "name": "@cprof/core",
-  "version": "0.0.0",
+  "version": "0.0.1-alpha.0",
+  "description": "Core scanning, redaction, manifest, bundling, validation, install, and diff engine for cprof.",
+  "license": "MIT",
   "type": "module",
+  "homepage": "https://vedant1202.github.io/claude-prof/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vedant1202/claude-prof.git",
+    "directory": "packages/core"
+  },
+  "bugs": "https://github.com/Vedant1202/claude-prof/issues",
+  "keywords": [
+    "claude-code",
+    "cprof",
+    "secret-redaction",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

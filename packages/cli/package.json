@@ -1,8 +1,30 @@
 {
   "name": "cprof",
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.0.1-alpha.0",
+  "description": "Local-first CLI to snapshot, scrub, and migrate your Claude Code setup as a redacted, portable profile.",
   "license": "MIT",
+  "type": "module",
+  "homepage": "https://vedant1202.github.io/claude-prof/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vedant1202/claude-prof.git",
+    "directory": "packages/cli"
+  },
+  "bugs": "https://github.com/Vedant1202/claude-prof/issues",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "mcp",
+    "cli",
+    "developer-tools",
+    "local-first",
+    "secret-redaction",
+    "dotfiles",
+    "configuration",
+    "migration",
+    "backup"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -14,6 +36,13 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
