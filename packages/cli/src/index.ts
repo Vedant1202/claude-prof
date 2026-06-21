@@ -3,7 +3,6 @@
 import { runDiff } from "./commands/diff.js";
 import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
-import { runPolicy } from "./commands/policy.js";
 import { runProfiles } from "./commands/profiles.js";
 import { runRefresh } from "./commands/refresh.js";
 import { runValidate } from "./commands/validate.js";
@@ -95,14 +94,6 @@ export async function main(
     return runProfiles(flags, {
       cwd: options.cwd ?? process.cwd(),
       homeDir: options.homeDir,
-      stdout,
-      stderr,
-    });
-  }
-
-  if (command === "policy") {
-    return runPolicy(flags, {
-      cwd: options.cwd ?? process.cwd(),
       stdout,
       stderr,
     });

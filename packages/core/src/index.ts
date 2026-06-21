@@ -118,12 +118,3 @@ export {
   type InstalledProfileRecord,
   type InstalledProfileState,
 } from "./state.js";
-export {
-  checkProfilePolicy,
-  loadTeamPolicy,
-  type PolicyCheckResult,
-  type PolicyLoadResult,
-  type PolicySection,
-  type PolicyViolation,
-  type TeamPolicy,
-} from "./policy.js";

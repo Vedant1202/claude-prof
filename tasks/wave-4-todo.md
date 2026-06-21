@@ -11,7 +11,7 @@ Legend: `[ ]` todo · `[x]` done · ⟂ checkpoint. Verify each with `pnpm build
 - [x] **T2 — remove registry**: delete `core/registry.ts`, `cli/commands/registry.ts`, their
   tests, `docs/phase-4.md`; remove `registry` dispatch in `cli/index.ts`; remove registry
   export block in `core/index.ts`
-- [ ] **T3 — remove policy**: delete `core/policy.ts`, `cli/commands/policy.ts`, their tests,
+- [x] **T3 — remove policy**: delete `core/policy.ts`, `cli/commands/policy.ts`, their tests,
   `docs/phase-6.md`; remove `policy` dispatch in `cli/index.ts`; remove policy export block in
   `core/index.ts`
 - [ ] **T4 — remove remote install**: trim `cli/commands/install.ts` (drop remote branch +
