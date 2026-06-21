@@ -15,12 +15,22 @@ export interface InstallProfileOptions {
   readonly installSource?: string;
 }
 
+export type InstallAction = "created" | "merged" | "overwritten";
+
 export interface InstallWrite {
   readonly source: "generated" | "asset";
   readonly section: string;
   readonly name: string;
   readonly path: string;
+  readonly action?: InstallAction;
+  readonly overriddenKeys?: readonly string[];
   readonly backupPath?: string;
+}
+
+export interface PreparedWrite extends PlannedWrite {
+  readonly action: InstallAction;
+  readonly finalContents: string;
+  readonly overriddenKeys: readonly string[];
 }
 
 export interface InstallConflict {

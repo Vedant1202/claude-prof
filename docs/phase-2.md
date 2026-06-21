@@ -19,15 +19,24 @@ secrets and conflicts, and prints the write plan without changing files.
 
 ## Default Safety
 
-`cprof install` fails if a target file already exists. Use `--force` to overwrite.
-When overwriting, cprof backs up the previous file under:
+cprof never destroys existing configuration:
+
+- **JSON config** (`settings.json`, `.mcp.json`, `~/.claude.json`) is **deep-merged** into the
+  target. Existing keys are preserved; profile values win on a direct collision; permission lists
+  (`permissions.allow` / `deny` / `ask`) are unioned. No `--force` is needed, and the prior file
+  is always backed up first.
+- **Asset files** (skills, commands, agents, memory, rules) are discrete files. cprof **fails if
+  one already exists**; pass `--force` to overwrite (the prior file is backed up).
+
+Backups are written under:
 
 ```text
 .cprof-backups/<timestamp>/
 ```
 
-Missing required `${env:NAME}` placeholders fail before any files are written.
-Resolved secret values are never printed in install reports.
+Missing required `${env:NAME}` placeholders fail before any files are written. Resolved secret
+values are never printed in install reports. The report marks each write `created`, `merged`, or
+`overwritten`, and lists any overridden keys (paths only — never values).
 
 ## Scope Rules
 

@@ -10,6 +10,7 @@ import {
   findMissingSecrets,
   resolveEnvPlaceholders,
 } from "./install-safety.js";
+import { deepMergeJson } from "./merge.js";
 import { isRecord } from "./record-utils.js";
 import { isInsideRoot } from "./traversal.js";
 import type {
@@ -21,6 +22,7 @@ import type {
   InstallWrite,
   PlannedWrite,
   PlanContext,
+  PreparedWrite,
 } from "./install-types.js";
 import { checkGeneratedOutputForLeaks } from "./leak-check.js";
 import { recordInstalledProfile } from "./state.js";
@@ -113,7 +115,23 @@ export async function installProfile(
     contents: resolveEnvPlaceholders(write.contents, context.env),
   }));
 
-  const conflicts = await findConflicts(resolvedWrites);
+  // JSON config (settings, mcpServers) deep-merges into the target; asset files
+  // overwrite. Disposition is computed here so dry-run and apply agree.
+  const prepared = await prepareWrites(resolvedWrites);
+
+  // Only asset overwrites are conflicts that require --force. JSON config merges
+  // by default (with a backup), so existing settings/.mcp.json/~/.claude.json are
+  // not conflicts.
+  const conflicts = prepared
+    .filter(
+      (write) => write.source === "asset" && write.action === "overwritten",
+    )
+    .map((write) => ({
+      path: write.path,
+      section: write.section,
+      name: write.name,
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path));
 
   if (conflicts.length > 0 && options.force !== true) {
     return createFailureResult({
@@ -125,28 +143,37 @@ export async function installProfile(
     });
   }
 
-  const writes = resolvedWrites.map(toPublicWrite);
+  const writes = prepared.map(toPublicWrite);
   const backupRoot = join(
     context.projectRoot,
     ".cprof-backups",
     formatTimestamp(options.now ?? new Date()),
   );
+  // Every merge backs up the prior file (reversible even without --force); asset
+  // overwrites are backed up only when --force is used.
+  const backupTargets: InstallConflict[] = [
+    ...prepared.filter(
+      (write) => write.source === "generated" && write.action === "merged",
+    ),
+    ...(options.force === true
+      ? prepared.filter(
+          (write) => write.source === "asset" && write.action === "overwritten",
+        )
+      : []),
+  ].map((write) => ({
+    path: write.path,
+    section: write.section,
+    name: write.name,
+  }));
   const backups =
-    options.force === true && options.dryRun !== true
-      ? await backupConflicts(conflicts, backupRoot, context.projectRoot)
-      : [];
+    options.dryRun === true
+      ? []
+      : await backupConflicts(backupTargets, backupRoot, context.projectRoot);
 
   if (options.dryRun !== true) {
-    for (const write of resolvedWrites) {
+    for (const write of prepared) {
       await mkdir(dirname(write.path), { recursive: true });
-
-      if (write.section === "mcpServers") {
-        // Merge into the target document so we never clobber unrelated keys —
-        // critical for ~/.claude.json, which holds the user's wider state.
-        await writeMergedMcpServers(write.path, write.contents);
-      } else {
-        await writeFile(write.path, write.contents, "utf8");
-      }
+      await writeFile(write.path, write.finalContents, "utf8");
     }
     await recordInstalledProfile(statePathForContext(context), {
       name: context.profile.name,
@@ -248,27 +275,55 @@ async function readProfile(
   }
 }
 
-async function findConflicts(
+const PERMISSION_ARRAY_PATHS = new Set([
+  "permissions/allow",
+  "permissions/deny",
+  "permissions/ask",
+]);
+
+async function prepareWrites(
   writes: readonly PlannedWrite[],
-): Promise<readonly InstallConflict[]> {
-  const conflicts: InstallConflict[] = [];
+): Promise<readonly PreparedWrite[]> {
+  return Promise.all(
+    writes.map(async (write): Promise<PreparedWrite> => {
+      const existed = await fileExists(write.path);
 
-  for (const write of writes) {
-    try {
-      await stat(write.path);
-      conflicts.push({
-        path: write.path,
-        section: write.section,
-        name: write.name,
-      });
-    } catch (error) {
-      if (!(isNodeError(error) && error.code === "ENOENT")) {
-        throw error;
+      if (write.source === "generated") {
+        const existing = await readJsonObject(write.path);
+        const incoming = JSON.parse(write.contents) as Record<string, unknown>;
+        const merged = deepMergeJson(existing, incoming, {
+          unionArrayPaths: PERMISSION_ARRAY_PATHS,
+        });
+
+        return {
+          ...write,
+          action: existed ? "merged" : "created",
+          finalContents: `${JSON.stringify(merged.value, null, 2)}\n`,
+          overriddenKeys: merged.overridden,
+        };
       }
-    }
-  }
 
-  return conflicts.sort((left, right) => left.path.localeCompare(right.path));
+      return {
+        ...write,
+        action: existed ? "overwritten" : "created",
+        finalContents: write.contents,
+        overriddenKeys: [],
+      };
+    }),
+  );
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return false;
+    }
+
+    throw error;
+  }
 }
 
 async function backupConflicts(
@@ -330,12 +385,15 @@ function createFailureResult(input: {
   };
 }
 
-function toPublicWrite(write: PlannedWrite): InstallWrite {
+function toPublicWrite(write: PreparedWrite): InstallWrite {
   return {
     source: write.source,
     section: write.section,
     name: write.name,
     path: write.path,
+    action: write.action,
+    overriddenKeys:
+      write.overriddenKeys.length > 0 ? write.overriddenKeys : undefined,
   };
 }
 
@@ -353,26 +411,6 @@ function isWriteContained(
     isInsideRoot(context.claudeHome, path) ||
     path === homeClaudeJson
   );
-}
-
-async function writeMergedMcpServers(
-  path: string,
-  contents: string,
-): Promise<void> {
-  const incoming = JSON.parse(contents) as { mcpServers?: unknown };
-  const existing = await readJsonObject(path);
-  const existingServers = isRecord(existing.mcpServers)
-    ? existing.mcpServers
-    : {};
-  const incomingServers = isRecord(incoming.mcpServers)
-    ? incoming.mcpServers
-    : {};
-  const merged = {
-    ...existing,
-    mcpServers: { ...existingServers, ...incomingServers },
-  };
-
-  await writeFile(path, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
 }
 
 async function readJsonObject(path: string): Promise<Record<string, unknown>> {
