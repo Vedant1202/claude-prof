@@ -109,9 +109,12 @@ Existing `${VAR}` expansions are preserved, and the generated manifest is
 | `cprof install <file> [--dry-run] [--force] [--global \| ...]` | Apply a trusted profile (deep merge; backs up before overwrite) |
 | `cprof validate <file>`                                        | Validate a profile against the schema                           |
 | `cprof diff <a.json> <b.json>`                                 | Compare two profiles semantically                               |
+| `cprof scan <file...>`                                         | Scan files for secrets — a standalone leak gate for CI          |
 | `cprof profiles list`                                          | List profiles recorded by local installs                        |
+| `cprof completion <bash\|zsh\|fish>`                           | Print a shell completion script                                 |
 
-Run `cprof --help` for full usage.
+Run `cprof --help` for the overview, or `cprof <command> --help` for one command.
+Every command accepts `--json` (machine-readable output) and `--quiet`.
 
 ## How it works
 
