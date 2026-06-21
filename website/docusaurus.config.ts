@@ -56,6 +56,18 @@ const config: Config = {
 
   themeConfig: {
     image: "img/docusaurus-social-card.jpg",
+    // Site-wide alpha flag. announcementBar is the right tool for a persistent,
+    // global notice — `:::` admonitions only render under MDX, and our .md pages
+    // are parsed as CommonMark (markdown.format: 'detect'), which by design does
+    // not process Docusaurus directives.
+    announcementBar: {
+      id: "alpha",
+      content:
+        "cprof is <strong>alpha</strong> software — review every generated profile before sharing it.",
+      backgroundColor: "#fef3c7",
+      textColor: "#1f2937",
+      isCloseable: true,
+    },
     colorMode: {
       respectPrefersColorScheme: true,
     },

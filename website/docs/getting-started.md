@@ -5,9 +5,9 @@ description: Install cprof and snapshot your Claude Code setup.
 
 # Getting Started
 
-:::warning Alpha
-cprof is **alpha** software. Review every generated profile before sharing it.
-:::
+> **Alpha** — cprof is alpha software. Review every generated profile before
+> sharing it. (The site-wide banner is set via `announcementBar`; `:::` admonitions
+> are MDX-only and don't render in these CommonMark `.md` pages.)
 
 This page is a temporary placeholder that also proves the markdown pipeline.
 
