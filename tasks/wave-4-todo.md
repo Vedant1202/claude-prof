@@ -18,10 +18,10 @@ Legend: `[ ]` todo · `[x]` done · ⟂ checkpoint. Verify each with `pnpm build
       `fetcher`/`remoteCacheRoot`); drop those options + `ProfileReferenceFetcher` from
       `cli/index.ts`; delete `core/remote.ts` + test + `docs/phase-3.md`; remove remote export block
 - [x] ⟂ **Checkpoint A** — all back-half code gone; `build + test` green
-- [ ] **T5 — README reposition + final gate**: reposition `README.md` around
+- [x] **T5 — README reposition + final gate**: reposition `README.md` around
       snapshot→scrub→migrate→diff (+ `profiles list`); full `build/test/lint/format` green; grep
       proves no remaining references to removed symbols
-- [ ] ⟂ **Checkpoint B** — Wave 4 complete; ready to commit/PR
+- [x] ⟂ **Checkpoint B** — Wave 4 complete; ready to commit/PR
 
 ## Deferred (not this wave)
 
