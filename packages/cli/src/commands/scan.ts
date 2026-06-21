@@ -5,6 +5,7 @@ import { checkGeneratedOutputForLeaks, type OutputLeak } from "@cprof/core";
 
 import {
   emitJson,
+  isNodeError,
   parseCommonFlags,
   type CommandWriter,
 } from "../command-utils.js";
@@ -40,19 +41,23 @@ export async function runScan(
       // Display the path as the user gave it, not the resolved absolute path.
       outputs.push({ path: file, contents });
     } catch (error) {
-      if (isEnoent(error)) {
-        if (json) {
-          emitJson(options.stdout, "scan", false, {
-            leaks: [],
-            errors: [`file not found: ${file}`],
-          });
-        } else {
-          options.stderr.write(`file not found: ${file}\n`);
-        }
-        return 2;
+      // Any unreadable path (missing, a directory, no permission) is an input
+      // error, not a crash — report it and exit 2 so a CI gate fails cleanly.
+      const message =
+        isNodeError(error) && error.code === "ENOENT"
+          ? `file not found: ${file}`
+          : `cannot read ${file}: ${isNodeError(error) ? error.code : "unknown error"}`;
+
+      if (json) {
+        emitJson(options.stdout, "scan", false, {
+          leaks: [],
+          errors: [message],
+        });
+      } else {
+        options.stderr.write(`${message}\n`);
       }
 
-      throw error;
+      return 2;
     }
   }
 
@@ -95,10 +100,4 @@ function formatLeak(leak: OutputLeak): string {
       : leak.path;
 
   return `${location}  ${leak.reason}`;
-}
-
-function isEnoent(error: unknown): boolean {
-  return (
-    error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT"
-  );
 }

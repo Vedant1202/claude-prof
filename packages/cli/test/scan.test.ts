@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -52,6 +52,17 @@ describe("cprof scan", () => {
     ).resolves.toBe(2);
 
     expect(stderr.output).toContain("file not found");
+  });
+
+  it("exits cleanly (no crash) when a path cannot be read as a file", async () => {
+    await mkdir(join(tempDir, "adir"));
+    const stderr = createWritable();
+
+    await expect(
+      main(["scan", "adir"], { cwd: tempDir, stderr }),
+    ).resolves.toBe(2);
+
+    expect(stderr.output).toContain("adir");
   });
 
   it("scans multiple files and flags the one with a secret", async () => {

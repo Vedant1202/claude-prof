@@ -98,6 +98,6 @@ export async function readProfileFile(
   }
 }
 
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error;
 }
