@@ -153,6 +153,13 @@ export function shouldRedactString(
     return undefined;
   }
 
+  // Preserve native ${VAR} / ${VAR:-default} expansion references — they are not
+  // raw secrets (Claude Code resolves them at runtime), so e.g. a header value of
+  // "Bearer ${API_KEY}" must survive redaction intact.
+  if (containsExpansion(value) && expansionRemainderIsSafe(value)) {
+    return undefined;
+  }
+
   // Provider-key detection (the old hand-rolled prefix list) now lives in
   // detector.ts (secretlint, Layer A) and runs in the async redaction path.
   if (keyPath.some((key) => SENSITIVE_KEY_PATTERN.test(normalizeKey(key)))) {
@@ -178,6 +185,23 @@ function redactNode(
   decide: RedactionDecision,
 ): RedactedProfileValue {
   if (typeof value === "string") {
+    // In-place redaction of secrets embedded in url query strings — keeps the
+    // host/path (and any ${VAR} references) intact.
+    const urlRedaction = redactUrlSecrets(value);
+
+    if (urlRedaction !== undefined) {
+      for (const redaction of urlRedaction.redactions) {
+        requiredSecrets.add(redaction.envName);
+        redactions.push({
+          path: `${formatPath(path)}?${redaction.param}`,
+          envName: redaction.envName,
+          reason: "key-name",
+        });
+      }
+
+      return urlRedaction.value;
+    }
+
     const reason = decide(value, path);
 
     if (reason === undefined) {
@@ -321,5 +345,94 @@ function isStructuralManifestPath(keyPath: readonly string[]): boolean {
   return (
     ["$schema", "version", "claudeCode"].includes(path) ||
     keyPath.at(-1) === "hash"
+  );
+}
+
+const EXPANSION_PATTERN = /\$\{[^}]+\}/g;
+
+const SENSITIVE_URL_PARAMS = new Set([
+  "token",
+  "access_token",
+  "api_key",
+  "apikey",
+  "key",
+  "secret",
+  "password",
+]);
+
+function containsExpansion(value: string): boolean {
+  return /\$\{[^}]+\}/.test(value);
+}
+
+function expansionRemainderIsSafe(value: string): boolean {
+  const remainder = value.replace(EXPANSION_PATTERN, "").trim();
+
+  if (remainder.length === 0) {
+    return true;
+  }
+
+  return !JWT_PATTERN.test(remainder) && !isHighEntropy(remainder);
+}
+
+interface UrlSecretRedaction {
+  readonly param: string;
+  readonly envName: string;
+}
+
+function redactUrlSecrets(value: string):
+  | {
+      readonly value: string;
+      readonly redactions: readonly UrlSecretRedaction[];
+    }
+  | undefined {
+  const queryIndex = value.indexOf("?");
+
+  if (queryIndex < 0 || !value.includes("://")) {
+    return undefined;
+  }
+
+  const base = value.slice(0, queryIndex);
+  const redactions: UrlSecretRedaction[] = [];
+
+  const rewritten = value
+    .slice(queryIndex + 1)
+    .split("&")
+    .map((pair) => {
+      const equals = pair.indexOf("=");
+
+      if (equals < 0) {
+        return pair;
+      }
+
+      const name = pair.slice(0, equals);
+      const paramValue = pair.slice(equals + 1);
+
+      if (
+        !isSensitiveUrlParam(name) ||
+        paramValue.length < 8 ||
+        containsExpansion(paramValue)
+      ) {
+        return pair;
+      }
+
+      const envName = deriveEnvName([name]);
+      redactions.push({ param: name, envName });
+      return `${name}=\${env:${envName}}`;
+    })
+    .join("&");
+
+  if (redactions.length === 0) {
+    return undefined;
+  }
+
+  return { value: `${base}?${rewritten}`, redactions };
+}
+
+function isSensitiveUrlParam(name: string): boolean {
+  const normalized = normalizeKey(name);
+
+  return (
+    SENSITIVE_URL_PARAMS.has(normalized) ||
+    SENSITIVE_KEY_PATTERN.test(normalized)
   );
 }

@@ -81,5 +81,9 @@ function isMcpServerMap(value: Record<string, unknown>): boolean {
 }
 
 function isMcpServer(value: unknown): value is McpServer {
-  return isRecord(value) && typeof value.command === "string";
+  // A server is either stdio (has a command) or remote (has a url + type).
+  return (
+    isRecord(value) &&
+    (typeof value.command === "string" || typeof value.url === "string")
+  );
 }

@@ -603,6 +603,36 @@ describe("installProfile", () => {
     ) as Record<string, unknown>;
     expect(onDisk).toEqual({ model: "opus" }); // unchanged
   });
+
+  it("installs a remote (http) MCP server", async () => {
+    await writeProfile(
+      buildManifest({
+        name: "p",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        mcpServers: {
+          api: {
+            type: "http",
+            url: "https://h.example.com/mcp",
+            scope: "project",
+          },
+        },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    const written = JSON.parse(
+      await readFile(join(targetDir, ".mcp.json"), "utf8"),
+    ) as { mcpServers: Record<string, { type: string; url: string }> };
+    expect(written.mcpServers.api?.type).toBe("http");
+    expect(written.mcpServers.api?.url).toBe("https://h.example.com/mcp");
+  });
 });
 
 async function writeAsset(path: string, contents: string): Promise<void> {

@@ -78,6 +78,12 @@ Reports never print raw secret values.
 Detected: known provider-key formats, values under secret-like keys, JWTs, and
 high-entropy base64/hex secrets (≥ 32 characters).
 
+MCP servers are captured whether local (`stdio` with a `command`) or remote
+(`http` / `sse` with a `url`). Remote auth is redacted: secret-looking `headers`
+values and secret-bearing `url` query params (`token`, `api_key`, …) become
+`${env:NAME}` placeholders. Values that already use Claude Code's native `${VAR}`
+expansion are preserved as-is — they are references, not raw secrets.
+
 Not detected: low-entropy or home-grown secrets under non-sensitive keys (e.g. a
 short memorable password stored under `note`), and AWS access-key IDs (`AKIA…`,
 which are identifiers rather than credentials — the AWS _secret_ key is caught).
