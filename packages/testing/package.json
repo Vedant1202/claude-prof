@@ -1,6 +1,9 @@
 {
   "name": "@cprof/testing",
-  "version": "0.0.0",
+  "version": "0.0.1-alpha.0",
+  "description": "Internal test fixtures and helpers for cprof. Not published.",
+  "license": "MIT",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
