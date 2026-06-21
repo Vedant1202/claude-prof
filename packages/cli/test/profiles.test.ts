@@ -84,6 +84,14 @@ describe("cprof profiles", () => {
     expect(stdout.output).toContain("Global Base 1.0.0");
   });
 
+  it("accepts the common --quiet flag without error", async () => {
+    const stdout = createWritable();
+
+    await expect(
+      main(["profiles", "list", "--quiet"], { cwd: targetDir, stdout }),
+    ).resolves.toBe(0);
+  });
+
   it("supports JSON output for profiles list", async () => {
     const stdout = createWritable();
 

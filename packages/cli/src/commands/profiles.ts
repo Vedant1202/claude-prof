@@ -6,7 +6,7 @@ import {
   type InstalledProfileRecord,
 } from "@cprof/core";
 
-import { emitJson } from "../command-utils.js";
+import { emitJson, parseCommonFlags } from "../command-utils.js";
 
 export interface ProfilesCommandOptions {
   readonly cwd: string;
@@ -18,14 +18,14 @@ export interface ProfilesCommandOptions {
 interface ParsedProfilesFlags {
   readonly valid: true;
   readonly global: boolean;
-  readonly json: boolean;
 }
 
 export async function runProfiles(
   flags: readonly string[],
   options: ProfilesCommandOptions,
 ): Promise<number> {
-  const parsed = parseProfilesFlags(flags);
+  const { json, rest } = parseCommonFlags(flags);
+  const parsed = parseProfilesFlags(rest);
 
   if (!parsed.valid) {
     options.stderr.write(`${parsed.error}\n`);
@@ -36,7 +36,7 @@ export async function runProfiles(
     statePath(options.cwd, options.homeDir ?? homedir(), parsed.global),
   );
 
-  if (parsed.json) {
+  if (json) {
     emitJson(options.stdout, "profiles", true, { installs: state.installs });
   } else {
     options.stdout.write(formatInstalls(state.installs));
@@ -51,10 +51,7 @@ type ParseProfilesResult =
 
 function parseProfilesFlags(flags: readonly string[]): ParseProfilesResult {
   const global = flags.includes("--global");
-  const json = flags.includes("--json");
-  const positional = flags.filter(
-    (flag) => flag !== "--global" && flag !== "--json",
-  );
+  const positional = flags.filter((flag) => flag !== "--global");
   const unknownFlag = positional.find((flag) => flag.startsWith("--"));
 
   if (unknownFlag !== undefined) {
@@ -71,7 +68,7 @@ function parseProfilesFlags(flags: readonly string[]): ParseProfilesResult {
     return { valid: false, error: `unexpected profiles argument: ${extra}` };
   }
 
-  return { valid: true, global, json };
+  return { valid: true, global };
 }
 
 function statePath(cwd: string, homeDir: string, global: boolean): string {
