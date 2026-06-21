@@ -43,4 +43,19 @@ describe("checkGeneratedOutputForLeaks", () => {
     expect(result.ok).toBe(false);
     expect(JSON.stringify(result)).not.toContain("ghp_a1B2c3");
   });
+
+  it("reports the 1-based line and column of a token leak", async () => {
+    const result = await checkGeneratedOutputForLeaks([
+      {
+        path: "skills/example/SKILL.md",
+        contents:
+          "line one is fine\nhere: ghp_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8\n",
+      },
+    ]);
+
+    expect(result.ok).toBe(false);
+    const located = result.leaks.find((leak) => leak.line !== undefined);
+    expect(located?.line).toBe(2);
+    expect(located?.col).toBe(7);
+  });
 });
