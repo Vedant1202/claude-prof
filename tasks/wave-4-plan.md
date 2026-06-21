@@ -31,6 +31,7 @@ independent; outdated is sequenced first to avoid a dangling `loadProfileRegistr
 ## Tasks
 
 ### T1 — Remove `profiles outdated` (the update check)
+
 - `cli/commands/profiles.ts`: drop the `outdated` action (union, parse, branch) and its imports
   (`checkInstalledProfileUpdates`, `loadProfileRegistry`, registry types); keep `list`.
 - `core/state.ts`: delete `checkInstalledProfileUpdates` + `ProfileUpdateStatus`; keep
@@ -43,6 +44,7 @@ independent; outdated is sequenced first to avoid a dangling `loadProfileRegistr
 - **Verify:** `corepack pnpm build && corepack pnpm test`.
 
 ### T2 — Remove registry
+
 - Delete `cli/commands/registry.ts`, `core/registry.ts`, `core/test/registry.test.ts`,
   `cli/test/registry.test.ts`, `docs/phase-4.md`.
 - `cli/index.ts`: remove the `registry` dispatch branch + `runRegistry` import.
@@ -52,6 +54,7 @@ independent; outdated is sequenced first to avoid a dangling `loadProfileRegistr
 - **Verify:** `corepack pnpm build && corepack pnpm test`.
 
 ### T3 — Remove policy
+
 - Delete `cli/commands/policy.ts`, `core/policy.ts`, `core/test/policy.test.ts`,
   `cli/test/policy.test.ts`, `docs/phase-6.md`.
 - `cli/index.ts`: remove the `policy` dispatch branch + `runPolicy` import.
@@ -60,6 +63,7 @@ independent; outdated is sequenced first to avoid a dangling `loadProfileRegistr
 - **Verify:** `corepack pnpm build && corepack pnpm test`.
 
 ### T4 — Remove remote install
+
 - `cli/commands/install.ts`: remove the `isRemoteProfileReference`/`fetchProfileReference`
   branch and the `fetcher`/`remoteCacheRoot` options + remote imports; keep the local-file path.
 - `cli/index.ts`: drop `fetcher`/`remoteCacheRoot` from `MainOptions` + the `runInstall` call,
@@ -74,22 +78,25 @@ independent; outdated is sequenced first to avoid a dangling `loadProfileRegistr
 > **Checkpoint A:** after T1–T4, all back-half code is gone and `build + test` are green. ⟂
 
 ### T5 — README reposition + final gate
+
 - `README.md`: remove the back-half command list (`registry`, `policy`, `profiles outdated`,
   `install <url|github:>`) and the phase-3/4/6 doc links; reposition the intro + command list
   around snapshot → scrub → migrate → diff (+ `profiles list`).
 - **Final gate:** `corepack pnpm build && corepack pnpm test && corepack pnpm lint &&
-  corepack pnpm format` all green; and:
+corepack pnpm format` all green; and:
   `grep -rnE "remote|registry|policy|fetchProfileReference|checkInstalledProfileUpdates|remoteCacheRoot|fetcher" packages/*/src` returns nothing (only ignore-related "remote"? confirm none).
 - **Acceptance:** README accurate; all four gates green; grep clean.
 
 > **Checkpoint B:** Wave 4 complete; ready to commit / open PR. ⟂
 
 ## Verification summary
+
 - Build between every task (catches dangling imports/exports — the main risk).
 - Front-half suites (`init`/`refresh`/`install-local`/`validate`/`diff`/`profiles list`) stay
   green; only back-half test cases are removed.
 - Final grep proves zero remaining references to removed symbols.
 
 ## Out of scope
+
 F4 (remote pinning — removed, not hardened), D6 (gitleaks CI), marketplace-interop growth wave.
 No change to the profile schema, redaction, scanner, or local install semantics.

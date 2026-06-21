@@ -105,14 +105,6 @@ export {
   type InstallWrite,
 } from "./install.js";
 export {
-  fetchProfileReference,
-  isRemoteProfileReference,
-  type FetchProfileReferenceOptions,
-  type FetchProfileReferenceResult,
-  type ProfileReferenceFetcher,
-  type ProfileReferenceResponse,
-} from "./remote.js";
-export {
   loadInstalledProfileState,
   recordInstalledProfile,
   type InstalledProfileRecord,

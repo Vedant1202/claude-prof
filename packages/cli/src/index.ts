@@ -6,7 +6,6 @@ import { runInstall } from "./commands/install.js";
 import { runProfiles } from "./commands/profiles.js";
 import { runRefresh } from "./commands/refresh.js";
 import { runValidate } from "./commands/validate.js";
-import type { ProfileReferenceFetcher } from "@cprof/core";
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -16,8 +15,6 @@ export interface MainOptions {
   readonly cwd?: string;
   readonly homeDir?: string;
   readonly env?: Readonly<Record<string, string | undefined>>;
-  readonly fetcher?: ProfileReferenceFetcher;
-  readonly remoteCacheRoot?: string;
   readonly stdout?: Pick<NodeJS.WriteStream, "write">;
   readonly stderr?: Pick<NodeJS.WriteStream, "write">;
 }
@@ -75,8 +72,6 @@ export async function main(
       cwd: options.cwd ?? process.cwd(),
       homeDir: options.homeDir,
       env: options.env,
-      fetcher: options.fetcher,
-      remoteCacheRoot: options.remoteCacheRoot,
       stdout,
       stderr,
     });
