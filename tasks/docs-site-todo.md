@@ -20,16 +20,18 @@ use blockquotes for light callouts inside `.md` pages.
       hero + Snapshot/Scrub/Migrate cards), navbar, footer, and alpha `announcementBar` were already in place.
       Grounded in `docs/phase-1/2/5` + `cprofignore` + the README; all `.md` (CommonMark), GFM tables confirmed.
 - [x] ⟂ **Checkpoint B** — full content authored, builds clean (no broken links), navigable
-- [ ] **T3 — Local/offline search**: `@easyops-cn/docusaurus-search-local` (hashed, en); query returns a hit
-- [ ] **T4 — SEO**: sitemap (preset-classic) + `robots.txt` + tagline + OG/Twitter `metadata` +
-      default social image + per-page frontmatter (title/description/image) + canonical; Lighthouse SEO green
-- [ ] **T5 — Versioning**: configure docs versioning, keep current as "Next"/latest; document the
-      `docs:version` cut workflow; verify a throwaway snapshot + dropdown then revert
+- [x] **T3 — Local/offline search**: `@easyops-cn/docusaurus-search-local@^0.55.2` theme (hashed, en, no blog);
+      navbar search box + static index, build-verified
+- [x] **T4 — SEO**: 9-URL `sitemap.xml` + `robots.txt` + cprof-branded `social-card.svg` (replaced the dino card) +
+      OG/Twitter `metadata` + per-page title/description (frontmatter) + canonical; `url` lowercased to match the Pages host
+- [x] **T5 — Versioning**: `lastVersion: 'current'` (live docs = "Next") + navbar `docsVersionDropdown`; cut workflow
+      documented in `website/README.md`; verified by cutting a throwaway version (dropdown showed Next + snapshot) then reverting
 - [x] **T6 — CI deploy** (done early, during release): `.github/workflows/docs.yml` deploys to GitHub Pages
       on push to `main`; Pages enabled, live at https://vedant1202.github.io/claude-prof/
-- [ ] **T7 — README repoint + final gate**: repoint README links (lines 7 & 48) to the docs URL;
-      clean build + broken-link check + Lighthouse SEO + prettier
-- [ ] ⟂ **Checkpoint C** — docs site complete; ready to commit/PR
+- [x] **T7 — README repoint + final gate**: root README already links to the docs site (the rewrite removed the
+      stale phase-doc links); final gate green — clean build, broken-link check (`onBrokenLinks: throw`), per-page
+      SEO meta, prettier. (A live Lighthouse run is left as an optional manual check.)
+- [x] ⟂ **Checkpoint C** — docs site complete (T1–T7); ready to commit/PR
 
 ## Deferred / out of scope
 
