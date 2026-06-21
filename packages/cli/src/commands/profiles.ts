@@ -6,6 +6,8 @@ import {
   type InstalledProfileRecord,
 } from "@cprof/core";
 
+import { emitJson } from "../command-utils.js";
+
 export interface ProfilesCommandOptions {
   readonly cwd: string;
   readonly homeDir?: string;
@@ -34,7 +36,12 @@ export async function runProfiles(
     statePath(options.cwd, options.homeDir ?? homedir(), parsed.global),
   );
 
-  options.stdout.write(formatInstalls(state.installs, parsed.json));
+  if (parsed.json) {
+    emitJson(options.stdout, "profiles", true, { installs: state.installs });
+  } else {
+    options.stdout.write(formatInstalls(state.installs));
+  }
+
   return 0;
 }
 
@@ -73,14 +80,7 @@ function statePath(cwd: string, homeDir: string, global: boolean): string {
     : join(resolve(cwd), ".cprof-state.json");
 }
 
-function formatInstalls(
-  installs: readonly InstalledProfileRecord[],
-  json: boolean,
-): string {
-  if (json) {
-    return `${JSON.stringify({ installs }, null, 2)}\n`;
-  }
-
+function formatInstalls(installs: readonly InstalledProfileRecord[]): string {
   if (installs.length === 0) {
     return "No installed profiles recorded.\n";
   }

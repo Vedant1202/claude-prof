@@ -91,7 +91,11 @@ describe("cprof profiles", () => {
       main(["profiles", "list", "--json"], { cwd: targetDir, stdout }),
     ).resolves.toBe(0);
 
-    expect(JSON.parse(stdout.output)).toEqual({ installs: [] });
+    expect(JSON.parse(stdout.output)).toEqual({
+      command: "profiles",
+      ok: true,
+      installs: [],
+    });
   });
 });
 

@@ -52,6 +52,8 @@ describe("cprof diff", () => {
     ).resolves.toBe(0);
 
     expect(JSON.parse(stdout.output)).toMatchObject({
+      command: "diff",
+      ok: true,
       entries: [{ kind: "added", path: "/commands/deploy" }],
     });
   });
