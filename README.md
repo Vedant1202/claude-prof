@@ -29,11 +29,11 @@ hoping you didn't leak an API key.
 `cprof` turns that setup into a single, portable, **secret-redacted**
 `claude-profile.json` you can carry, diff, and re-apply anywhere:
 
-- 📸 **Snapshot** — capture your project or global Claude Code config into one
+- **Snapshot** — capture your project or global Claude Code config into one
   deterministic, schema-valid file.
-- 🧼 **Scrub** — secrets are redacted to `${env:NAME}` placeholders on the way
-  out, and the result is re-scanned before it's written.
-- 🚚 **Migrate** — apply a trusted profile onto another machine with a
+- **Scrub** — secrets are redacted to `${env:NAME}` placeholders on the way out,
+  and the result is re-scanned before it's written.
+- **Migrate** — apply a trusted profile onto another machine with a
   non-destructive deep merge (with dry-run and backups).
 
 It is **local-first**: profiles are files you produce and carry yourself. cprof
