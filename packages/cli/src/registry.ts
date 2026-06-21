@@ -1,3 +1,4 @@
+import { runCompletion } from "./commands/completion.js";
 import { runDiff } from "./commands/diff.js";
 import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
@@ -33,17 +34,23 @@ export interface Command {
   readonly summary: string;
   /** Full usage block shown by `cprof <command> --help`. */
   readonly usage: string;
+  /** Command-specific flags (excludes the common --json/--quiet/--help). */
+  readonly flags: readonly string[];
   readonly run: (
     flags: readonly string[],
     context: CommandContext,
   ) => Promise<number>;
 }
 
+/** Flags accepted by every command, appended to each command's own in help/completion. */
+export const COMMON_FLAGS: readonly string[] = ["--json", "--quiet", "--help"];
+
 export const COMMANDS: readonly Command[] = [
   {
     name: "init",
     synopsis: "init [--global | --include-global]",
     summary: "Snapshot the current setup into claude-profile.json",
+    flags: ["--global", "--include-global"],
     usage: [
       "Usage: cprof init [--global | --include-global]",
       "",
@@ -67,6 +74,7 @@ export const COMMANDS: readonly Command[] = [
     name: "refresh",
     synopsis: "refresh",
     summary: "Rebuild the profile from its recorded source scope",
+    flags: [],
     usage: [
       "Usage: cprof refresh",
       "",
@@ -86,6 +94,7 @@ export const COMMANDS: readonly Command[] = [
     synopsis:
       "install <file> [--dry-run] [--force] [--global | --include-global]",
     summary: "Apply a trusted profile to this machine (deep merge)",
+    flags: ["--dry-run", "--force", "--global", "--include-global"],
     usage: [
       "Usage: cprof install <file> [--dry-run] [--force] [--global | --include-global]",
       "",
@@ -111,6 +120,7 @@ export const COMMANDS: readonly Command[] = [
     name: "validate",
     synopsis: "validate <file>",
     summary: "Validate a profile against the schema",
+    flags: [],
     usage: [
       "Usage: cprof validate [--json] <file>",
       "",
@@ -130,6 +140,7 @@ export const COMMANDS: readonly Command[] = [
     name: "diff",
     synopsis: "diff <a.json> <b.json>",
     summary: "Compare two profiles semantically",
+    flags: [],
     usage: [
       "Usage: cprof diff [--json] <a.json> <b.json>",
       "",
@@ -149,6 +160,7 @@ export const COMMANDS: readonly Command[] = [
     name: "scan",
     synopsis: "scan <file...>",
     summary: "Scan files for secrets (a standalone leak gate)",
+    flags: [],
     usage: [
       "Usage: cprof scan [--json] [--quiet] <file...>",
       "",
@@ -172,6 +184,7 @@ export const COMMANDS: readonly Command[] = [
     name: "profiles",
     synopsis: "profiles list",
     summary: "List profiles recorded by local installs",
+    flags: ["--global"],
     usage: [
       "Usage: cprof profiles list [--global] [--json]",
       "",
@@ -185,6 +198,27 @@ export const COMMANDS: readonly Command[] = [
       runProfiles(flags, {
         cwd: context.cwd,
         homeDir: context.homeDir,
+        stdout: context.stdout,
+        stderr: context.stderr,
+      }),
+  },
+  {
+    name: "completion",
+    synopsis: "completion <bash|zsh|fish>",
+    summary: "Print a shell completion script",
+    flags: [],
+    usage: [
+      "Usage: cprof completion <bash|zsh|fish>",
+      "",
+      "Print a shell completion script (generated from the command table) to stdout.",
+      "",
+      "Examples:",
+      "  cprof completion bash >> ~/.bashrc",
+      '  cprof completion zsh  > "${fpath[1]}/_cprof"',
+      "  cprof completion fish > ~/.config/fish/completions/cprof.fish",
+    ].join("\n"),
+    run: (flags, context) =>
+      runCompletion(flags, {
         stdout: context.stdout,
         stderr: context.stderr,
       }),

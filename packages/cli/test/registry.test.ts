@@ -12,6 +12,7 @@ describe("command registry", () => {
       "diff",
       "scan",
       "profiles",
+      "completion",
     ]);
   });
 
