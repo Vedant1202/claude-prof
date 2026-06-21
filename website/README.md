@@ -1,41 +1,49 @@
-# Website
+# @cprof/docs
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+The [cprof](https://github.com/Vedant1202/claude-prof) documentation site, built
+with [Docusaurus](https://docusaurus.io/) and published to GitHub Pages at
+**https://vedant1202.github.io/claude-prof/**.
 
-## Installation
+## Develop
 
-```bash
-yarn
-```
-
-## Local Development
+The site is a pnpm workspace package; run from the repo root:
 
 ```bash
-yarn start
+corepack pnpm install
+corepack pnpm --filter @cprof/docs start   # dev server with live reload
+corepack pnpm --filter @cprof/docs build   # production build into website/build
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+## Authoring
 
-## Build
-
-```bash
-yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+- Write pages as plain `.md` (CommonMark). With `markdown.format: 'detect'`, `.md`
+  is parsed as CommonMark, so prose tokens like `${env:NAME}`, `<file>`, and
+  generics render literally. Reserve `.mdx` only for pages that genuinely need
+  `:::` admonitions, tabs, or JSX.
+- The sidebar is curated by hand in `sidebars.ts`.
+- The site-wide alpha notice is the `announcementBar` in `docusaurus.config.ts`;
+  use blockquotes for lighter callouts.
 
 ## Deployment
 
-Using SSH:
+Automatic. `.github/workflows/docs.yml` builds and deploys to GitHub Pages on
+every push to `main` that touches `website/**`. There is no manual deploy step.
+
+## Versioning
+
+The working docs are the **Next** (unreleased) version, served at `/docs`.
+Versioning is wired up (`lastVersion: 'current'` plus a navbar version dropdown),
+so you can freeze a stable snapshot whenever you cut a release:
 
 ```bash
-USE_SSH=true yarn deploy
+corepack pnpm --filter @cprof/docs exec docusaurus docs:version 0.1.0
 ```
 
-Not using SSH:
+That copies the current `docs/` into `website/versioned_docs/version-0.1.0/`,
+writes a versioned sidebar, and adds `0.1.0` to `versions.json`. The dropdown then
+offers **Next** (the live, edited docs) and **0.1.0** (frozen). To undo a
+snapshot, delete its `versioned_docs/version-X` and `versioned_sidebars` entries
+and remove it from `versions.json`.
 
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+We keep the docs unversioned during the fast-moving alpha and will cut the first
+snapshot at a stable release.

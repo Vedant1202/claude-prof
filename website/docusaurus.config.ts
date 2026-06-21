@@ -45,6 +45,13 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           editUrl:
             "https://github.com/Vedant1202/claude-prof/tree/main/website/",
+          // Versioning is ready from day one. The working docs are the "Next"
+          // (unreleased) version; cut a stable snapshot with
+          // `docusaurus docs:version <v>` — see website/README.md.
+          lastVersion: "current",
+          versions: {
+            current: { label: "Next" },
+          },
         },
         blog: false,
         sitemap: {
@@ -100,6 +107,10 @@ const config: Config = {
           sidebarId: "docsSidebar",
           position: "left",
           label: "Docs",
+        },
+        {
+          type: "docsVersionDropdown",
+          position: "right",
         },
         {
           href: "https://github.com/Vedant1202/claude-prof",
