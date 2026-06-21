@@ -19,7 +19,14 @@ export function createInstallReport(input: {
     "",
     `Writes: ${input.writes.length}`,
     ...input.writes
-      .map((write) => `- ${write.section}/${write.name}: ${write.path}`)
+      .map((write) => {
+        const action = write.action ? ` [${write.action}]` : "";
+        const overrides =
+          write.overriddenKeys && write.overriddenKeys.length > 0
+            ? ` (overrides: ${[...write.overriddenKeys].sort().join(", ")})`
+            : "";
+        return `- ${write.section}/${write.name}${action}: ${write.path}${overrides}`;
+      })
       .sort(),
     "",
     `Conflicts: ${input.conflicts.length}`,

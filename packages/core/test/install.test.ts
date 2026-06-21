@@ -422,6 +422,187 @@ describe("installProfile", () => {
     expect(written.mcpServers.existing).toEqual({ command: "old" });
     expect(written.mcpServers.added?.command).toBe("npx");
   });
+
+  it("deep-merges settings.json without --force and backs up the prior file", async () => {
+    await mkdir(join(targetDir, ".claude"), { recursive: true });
+    await writeFile(
+      join(targetDir, ".claude", "settings.json"),
+      `${JSON.stringify(
+        { model: "opus", permissions: { allow: ["Read"] }, legacy: true },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "p",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        settings: { permissions: { allow: ["Edit"] }, env: { FLAG: "1" } },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    const merged = JSON.parse(
+      await readFile(join(targetDir, ".claude", "settings.json"), "utf8"),
+    ) as {
+      model: string;
+      legacy: boolean;
+      permissions: { allow: string[] };
+      env: Record<string, string>;
+    };
+    expect(merged.model).toBe("opus"); // preserved
+    expect(merged.legacy).toBe(true); // preserved
+    expect(merged.permissions.allow).toEqual(["Read", "Edit"]); // unioned
+    expect(merged.env).toEqual({ FLAG: "1" }); // added
+    expect(
+      result.writes.find((write) => write.section === "settings")?.action,
+    ).toBe("merged");
+    expect(result.backups.length).toBeGreaterThan(0);
+  });
+
+  it("merges global MCP into ~/.claude.json without --force", async () => {
+    await mkdir(join(homeDir, ".claude"), { recursive: true });
+    await writeFile(
+      join(homeDir, ".claude.json"),
+      `${JSON.stringify(
+        { userID: "keep", mcpServers: { existing: { command: "old" } } },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "g",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "global" }),
+        mcpServers: { added: { command: "npx", scope: "global" } },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      scope: "global",
+    });
+
+    expect(result.ok).toBe(true);
+    const written = JSON.parse(
+      await readFile(join(homeDir, ".claude.json"), "utf8"),
+    ) as { userID: string; mcpServers: Record<string, { command: string }> };
+    expect(written.userID).toBe("keep");
+    expect(written.mcpServers.existing).toEqual({ command: "old" });
+    expect(written.mcpServers.added?.command).toBe("npx");
+  });
+
+  it("profile wins on collisions and reports overridden keys", async () => {
+    await mkdir(join(targetDir, ".claude"), { recursive: true });
+    await writeFile(
+      join(targetDir, ".claude", "settings.json"),
+      `${JSON.stringify({ model: "opus" }, null, 2)}\n`,
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "p",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        settings: { model: "sonnet" },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    const merged = JSON.parse(
+      await readFile(join(targetDir, ".claude", "settings.json"), "utf8"),
+    ) as { model: string };
+    expect(merged.model).toBe("sonnet"); // profile wins
+    expect(result.report).toContain("[merged]");
+    expect(result.report).toContain("overrides: model");
+  });
+
+  it("does not abort when the target already holds a secret (leak-check scans profile only)", async () => {
+    await mkdir(join(targetDir, ".claude"), { recursive: true });
+    await writeFile(
+      join(targetDir, ".claude", "settings.json"),
+      `${JSON.stringify(
+        { legacyToken: "ghp_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8" },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "p",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        settings: { model: "sonnet" },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(true); // a pre-existing on-disk secret must not block install
+    const merged = JSON.parse(
+      await readFile(join(targetDir, ".claude", "settings.json"), "utf8"),
+    ) as { model: string; legacyToken: string };
+    expect(merged.model).toBe("sonnet");
+    expect(merged.legacyToken).toContain("ghp_"); // user's own file is preserved
+  });
+
+  it("dry-run reports the merge disposition without writing", async () => {
+    await mkdir(join(targetDir, ".claude"), { recursive: true });
+    await writeFile(
+      join(targetDir, ".claude", "settings.json"),
+      `${JSON.stringify({ model: "opus" }, null, 2)}\n`,
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "p",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        settings: { model: "sonnet", env: { X: "1" } },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      dryRun: true,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.dryRun).toBe(true);
+    expect(
+      result.writes.find((write) => write.section === "settings")?.action,
+    ).toBe("merged");
+    expect(result.backups).toEqual([]);
+    const onDisk = JSON.parse(
+      await readFile(join(targetDir, ".claude", "settings.json"), "utf8"),
+    ) as Record<string, unknown>;
+    expect(onDisk).toEqual({ model: "opus" }); // unchanged
+  });
 });
 
 async function writeAsset(path: string, contents: string): Promise<void> {
