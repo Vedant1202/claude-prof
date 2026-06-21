@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { main } from "../src/index.js";
+import { singleQuoteEscape } from "../src/commands/completion.js";
 import { createWritable } from "./helpers.js";
+
+describe("singleQuoteEscape", () => {
+  it("escapes single quotes for a single-quoted shell string", () => {
+    expect(singleQuoteEscape("List a user's profiles")).toBe(
+      "List a user'\\''s profiles",
+    );
+  });
+
+  it("leaves quote-free text unchanged", () => {
+    expect(singleQuoteEscape("Compare two profiles")).toBe(
+      "Compare two profiles",
+    );
+  });
+});
 
 describe("cprof completion", () => {
   it("emits a bash completion script naming the commands", async () => {

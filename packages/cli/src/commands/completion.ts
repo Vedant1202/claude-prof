@@ -43,6 +43,11 @@ function flagsFor(name: string): readonly string[] {
   return command ? [...command.flags, ...COMMON_FLAGS] : [...COMMON_FLAGS];
 }
 
+/** Make a string safe to embed inside a single-quoted shell string. */
+export function singleQuoteEscape(value: string): string {
+  return value.replace(/'/g, "'\\''");
+}
+
 const generators: Record<Shell, () => string> = {
   bash: bashCompletion,
   zsh: zshCompletion,
@@ -73,7 +78,7 @@ complete -F _cprof cprof
 
 function zshCompletion(): string {
   const describe = COMMANDS.map(
-    (command) => `    '${command.name}:${command.summary}'`,
+    (command) => `    '${command.name}:${singleQuoteEscape(command.summary)}'`,
   ).join("\n");
   const branches = COMMANDS.map(
     (command) =>
@@ -107,7 +112,9 @@ function fishCompletion(): string {
     "# cprof fish completion — cprof completion fish > ~/.config/fish/completions/cprof.fish";
   const commands = COMMANDS.map(
     (command) =>
-      `complete -c cprof -n __fish_use_subcommand -a ${command.name} -d '${command.summary}'`,
+      `complete -c cprof -n __fish_use_subcommand -a ${command.name} -d '${singleQuoteEscape(
+        command.summary,
+      )}'`,
   );
   const flagLines = COMMANDS.flatMap((command) =>
     flagsFor(command.name).map(
