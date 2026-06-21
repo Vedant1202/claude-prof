@@ -19,6 +19,29 @@ export interface MainOptions {
   readonly stderr?: Pick<NodeJS.WriteStream, "write">;
 }
 
+const USAGE = `cprof — snapshot, scrub, and migrate your Claude Code setup
+
+Usage: cprof <command> [options]
+
+Commands:
+  init [--global | --include-global]   Snapshot the current setup into claude-profile.json
+  refresh                              Rebuild the profile from its recorded source scope
+  install <file> [--dry-run] [--force] [--global | --include-global]
+                                       Apply a trusted profile to this machine (deep merge)
+  validate <file>                      Validate a profile against the schema
+  diff <a.json> <b.json>               Compare two profiles semantically
+  profiles list                        List profiles recorded by local installs
+
+Options:
+  -h, --help                           Show this help
+  -v, --version                        Show the version
+
+Profiles are local-first and secret-redacted on capture, but redaction is
+best-effort — always review a profile before sharing it.
+
+Docs: https://vedant1202.github.io/claude-prof/
+`;
+
 function readVersion(): string {
   try {
     const pkgPath = join(
@@ -42,8 +65,18 @@ export async function main(
   const stdout = options.stdout ?? process.stdout;
   const stderr = options.stderr ?? process.stderr;
 
-  if (argv.includes("--version")) {
+  if (argv.includes("--version") || argv.includes("-v")) {
     stdout.write(`${readVersion()}\n`);
+    return 0;
+  }
+
+  if (
+    argv.length === 0 ||
+    argv[0] === "help" ||
+    argv.includes("--help") ||
+    argv.includes("-h")
+  ) {
+    stdout.write(USAGE);
     return 0;
   }
 
@@ -102,7 +135,9 @@ export async function main(
     });
   }
 
-  stderr.write(`unknown command: ${command ?? "(none)"}\n`);
+  stderr.write(
+    `unknown command: ${command}\nRun \`cprof --help\` to see available commands.\n`,
+  );
   return 1;
 }
 

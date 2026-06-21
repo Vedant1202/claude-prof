@@ -1,12 +1,18 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { createRequire } from "node:module";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { validateProfile } from "@cprof/core";
 import { main } from "../src/index.js";
 import { createWritable, readProfileJson } from "./helpers.js";
+
+// Read the version from the package so this test survives version bumps.
+const pkgVersion = (
+  createRequire(import.meta.url)("../package.json") as { version: string }
+).version;
 
 let tempDir: string;
 
@@ -24,7 +30,34 @@ describe("cprof cli", () => {
 
     await expect(main(["--version"], { stdout })).resolves.toBe(0);
 
-    expect(stdout.output).toBe("0.0.0\n");
+    expect(stdout.output).toBe(`${pkgVersion}\n`);
+  });
+
+  it("prints usage with --help and exits 0", async () => {
+    const stdout = createWritable();
+
+    await expect(main(["--help"], { stdout })).resolves.toBe(0);
+
+    expect(stdout.output).toContain("Usage: cprof <command>");
+    expect(stdout.output).toContain("init");
+    expect(stdout.output).toContain("install");
+  });
+
+  it("prints usage when no command is given", async () => {
+    const stdout = createWritable();
+
+    await expect(main([], { stdout })).resolves.toBe(0);
+
+    expect(stdout.output).toContain("Usage: cprof <command>");
+  });
+
+  it("rejects an unknown command with a hint", async () => {
+    const stderr = createWritable();
+
+    await expect(main(["frobnicate"], { stderr })).resolves.toBe(1);
+
+    expect(stderr.output).toContain("unknown command: frobnicate");
+    expect(stderr.output).toContain("--help");
   });
 
   it("creates a project profile", async () => {
