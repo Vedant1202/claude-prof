@@ -113,15 +113,6 @@ export {
   type ProfileReferenceResponse,
 } from "./remote.js";
 export {
-  findRegistryProfile,
-  listRegistryProfiles,
-  loadProfileRegistry,
-  searchRegistryProfiles,
-  type ProfileRegistry,
-  type RegistryLoadResult,
-  type RegistryProfile,
-} from "./registry.js";
-export {
   loadInstalledProfileState,
   recordInstalledProfile,
   type InstalledProfileRecord,

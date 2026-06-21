@@ -8,7 +8,7 @@ Legend: `[ ]` todo · `[x]` done · ⟂ checkpoint. Verify each with `pnpm build
 - [x] **T1 — remove `profiles outdated`**: trim `profiles.ts` (keep `list`); delete
   `checkInstalledProfileUpdates`/`ProfileUpdateStatus` from `state.ts`; trim `core/index.ts`
   state exports; drop outdated cases in `profiles.test`/`state.test`; trim `docs/phase-5.md`
-- [ ] **T2 — remove registry**: delete `core/registry.ts`, `cli/commands/registry.ts`, their
+- [x] **T2 — remove registry**: delete `core/registry.ts`, `cli/commands/registry.ts`, their
   tests, `docs/phase-4.md`; remove `registry` dispatch in `cli/index.ts`; remove registry
   export block in `core/index.ts`
 - [ ] **T3 — remove policy**: delete `core/policy.ts`, `cli/commands/policy.ts`, their tests,
