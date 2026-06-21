@@ -19,7 +19,11 @@ export interface ProfileRegistry {
 
 export type RegistryLoadResult =
   | { readonly ok: true; readonly registry: ProfileRegistry }
-  | { readonly ok: false; readonly exitCode: 1 | 2; readonly errors: readonly string[] };
+  | {
+      readonly ok: false;
+      readonly exitCode: 1 | 2;
+      readonly errors: readonly string[];
+    };
 
 export async function loadProfileRegistry(
   path: string,
@@ -52,7 +56,9 @@ export async function loadProfileRegistry(
     return {
       ok: false,
       exitCode: 1,
-      errors: [error instanceof Error ? error.message : "registry JSON is invalid"],
+      errors: [
+        error instanceof Error ? error.message : "registry JSON is invalid",
+      ],
     };
   }
 }
@@ -172,7 +178,10 @@ function searchableText(profile: RegistryProfile): string {
     .toLowerCase();
 }
 
-function compareProfiles(left: RegistryProfile, right: RegistryProfile): number {
+function compareProfiles(
+  left: RegistryProfile,
+  right: RegistryProfile,
+): number {
   return left.id.localeCompare(right.id);
 }
 

@@ -45,10 +45,9 @@ describe("profile registry", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(listRegistryProfiles(result.registry).map((profile) => profile.id)).toEqual([
-        "solo/minimal",
-        "team/base",
-      ]);
+      expect(
+        listRegistryProfiles(result.registry).map((profile) => profile.id),
+      ).toEqual(["solo/minimal", "team/base"]);
     }
   });
 
@@ -71,18 +70,20 @@ describe("profile registry", () => {
       ],
     };
 
-    expect(searchRegistryProfiles(registry, "type").map((profile) => profile.id)).toEqual([
-      "team/base",
-    ]);
-    expect(searchRegistryProfiles(registry, "analysis").map((profile) => profile.id)).toEqual([
-      "python/data",
-    ]);
+    expect(
+      searchRegistryProfiles(registry, "type").map((profile) => profile.id),
+    ).toEqual(["team/base"]);
+    expect(
+      searchRegistryProfiles(registry, "analysis").map((profile) => profile.id),
+    ).toEqual(["python/data"]);
   });
 
   it("finds profiles by id", () => {
     const registry = {
       version: 1 as const,
-      profiles: [{ id: "team/base", name: "Team Base", source: "github:team/base" }],
+      profiles: [
+        { id: "team/base", name: "Team Base", source: "github:team/base" },
+      ],
     };
 
     expect(findRegistryProfile(registry, "team/base")).toMatchObject({
@@ -108,7 +109,9 @@ describe("profile registry", () => {
   });
 
   it("returns exit code 2 for missing registry files", async () => {
-    await expect(loadProfileRegistry(join(tempDir, "missing.json"))).resolves.toMatchObject({
+    await expect(
+      loadProfileRegistry(join(tempDir, "missing.json")),
+    ).resolves.toMatchObject({
       ok: false,
       exitCode: 2,
     });

@@ -61,7 +61,10 @@ describe("installProfile", () => {
       "skills",
     ]);
     await expect(
-      readFile(join(targetDir, ".claude", "skills", "review", "SKILL.md"), "utf8"),
+      readFile(
+        join(targetDir, ".claude", "skills", "review", "SKILL.md"),
+        "utf8",
+      ),
     ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
@@ -238,7 +241,9 @@ describe("installProfile", () => {
       exitCode: 1,
       missingSecrets: ["GITHUB_TOKEN"],
     });
-    await expect(readFile(join(targetDir, ".mcp.json"), "utf8")).rejects.toMatchObject({
+    await expect(
+      readFile(join(targetDir, ".mcp.json"), "utf8"),
+    ).rejects.toMatchObject({
       code: "ENOENT",
     });
   });
@@ -267,10 +272,12 @@ describe("installProfile", () => {
     });
 
     expect(result.ok).toBe(true);
-    await expect(readFile(join(targetDir, ".mcp.json"), "utf8")).resolves.toContain(
+    await expect(
+      readFile(join(targetDir, ".mcp.json"), "utf8"),
+    ).resolves.toContain("ghp_123456789012345678901234567890123456");
+    expect(result.report).not.toContain(
       "ghp_123456789012345678901234567890123456",
     );
-    expect(result.report).not.toContain("ghp_123456789012345678901234567890123456");
   });
 
   it("reports hooks and plugins as inventory-only skips", async () => {
@@ -336,11 +343,84 @@ describe("installProfile", () => {
 
     expect(result.ok).toBe(true);
     await expect(
-      readFile(join(targetDir, ".claude", "skills", "linked", "SKILL.md"), "utf8"),
+      readFile(
+        join(targetDir, ".claude", "skills", "linked", "SKILL.md"),
+        "utf8",
+      ),
     ).resolves.toBe("# Linked\n");
     await expect(
-      readFile(join(targetDir, ".claude", "skills", "linked", "outside.md"), "utf8"),
+      readFile(
+        join(targetDir, ".claude", "skills", "linked", "outside.md"),
+        "utf8",
+      ),
     ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("refuses to write outside the target via a crafted section key", async () => {
+    await writeAsset("legit.md", "# legit\n");
+    await writeProfile({
+      $schema: "https://cprof.dev/schema/v1.json",
+      name: "evil",
+      version: "1.0.0",
+      profileScope: "project",
+      includesGlobal: false,
+      sources: [{ scope: "project" }],
+      skills: {
+        "../../../../escaped": { source: "./legit.md", scope: "project" },
+      },
+    });
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.writes).toHaveLength(0);
+    await expect(
+      readFile(join(tempDir, "escaped", "legit.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("merges MCP servers into ~/.claude.json without clobbering other keys", async () => {
+    await mkdir(join(homeDir, ".claude"), { recursive: true });
+    await writeFile(
+      join(homeDir, ".claude.json"),
+      `${JSON.stringify(
+        { userID: "keep-me", mcpServers: { existing: { command: "old" } } },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    await writeProfile(
+      buildManifest({
+        name: "g",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "global" }),
+        mcpServers: { added: { command: "npx", scope: "global" } },
+      }),
+    );
+
+    const result = await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      scope: "global",
+      force: true,
+    });
+
+    expect(result.ok).toBe(true);
+    const written = JSON.parse(
+      await readFile(join(homeDir, ".claude.json"), "utf8"),
+    ) as {
+      userID: string;
+      mcpServers: Record<string, { command: string }>;
+    };
+    expect(written.userID).toBe("keep-me");
+    expect(written.mcpServers.existing).toEqual({ command: "old" });
+    expect(written.mcpServers.added?.command).toBe("npx");
   });
 });
 

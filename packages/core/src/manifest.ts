@@ -5,7 +5,12 @@ import type {
   ProfileItem,
 } from "@cprof/schema";
 
-import { redactSecrets, type Redaction } from "./redactor.js";
+import {
+  redactSecrets,
+  redactSecretsAsync,
+  type Redaction,
+  type RedactionResult,
+} from "./redactor.js";
 import type { ProfileSourceMetadata } from "./sources.js";
 
 export type ManifestSectionMap<T> = Readonly<Record<string, T>>;
@@ -39,7 +44,22 @@ export function buildManifest(input: BuildManifestInput): CprofProfile {
 export function buildManifestWithRedactions(
   input: BuildManifestInput,
 ): BuildManifestResult {
-  const manifest = compactProfile({
+  return finalizeManifest(redactSecrets(assembleManifest(input)));
+}
+
+/**
+ * Async manifest build used by the scanner/snapshot path. Identical to
+ * {@link buildManifestWithRedactions} except redaction also runs Layer A
+ * (secretlint provider-key detection).
+ */
+export async function buildManifestWithRedactionsAsync(
+  input: BuildManifestInput,
+): Promise<BuildManifestResult> {
+  return finalizeManifest(await redactSecretsAsync(assembleManifest(input)));
+}
+
+function assembleManifest(input: BuildManifestInput) {
+  return compactProfile({
     $schema: "https://cprof.dev/schema/v1.json",
     name: input.name,
     version: input.version,
@@ -58,7 +78,9 @@ export function buildManifestWithRedactions(
     hooks: normalizeHooks(input.hooks),
     mcpServers: sortRecord(input.mcpServers),
   });
-  const redaction = redactSecrets(manifest);
+}
+
+function finalizeManifest(redaction: RedactionResult): BuildManifestResult {
   const redactedManifest = redaction.value as unknown as CprofProfile;
 
   return {

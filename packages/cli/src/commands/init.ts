@@ -44,6 +44,16 @@ export async function runInit(
     return validation.exitCode;
   }
 
+  if (!scan.leakCheck.ok) {
+    const leakedPaths = [
+      ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
+    ];
+    options.stderr.write(
+      `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
+    );
+    return 3;
+  }
+
   await writeFile(
     join(options.cwd, "claude-profile.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,

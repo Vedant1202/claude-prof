@@ -34,7 +34,9 @@ export async function runRegistry(
     return 1;
   }
 
-  const registry = await loadProfileRegistry(resolve(options.cwd, parsed.registryPath));
+  const registry = await loadProfileRegistry(
+    resolve(options.cwd, parsed.registryPath),
+  );
 
   if (!registry.ok) {
     options.stderr.write(`${registry.errors.join("\n")}\n`);
@@ -48,7 +50,10 @@ export async function runRegistry(
   }
 
   if (parsed.action === "search") {
-    const profiles = searchRegistryProfiles(registry.registry, parsed.query ?? "");
+    const profiles = searchRegistryProfiles(
+      registry.registry,
+      parsed.query ?? "",
+    );
     options.stdout.write(formatProfiles(profiles, parsed.json));
     return 0;
   }
@@ -139,7 +144,9 @@ function formatProfile(profile: RegistryProfile, json: boolean): string {
     profile.scope !== undefined ? `scope: ${profile.scope}` : undefined,
     profile.tags !== undefined ? `tags: ${profile.tags.join(", ")}` : undefined,
     profile.author !== undefined ? `author: ${profile.author}` : undefined,
-    profile.updatedAt !== undefined ? `updatedAt: ${profile.updatedAt}` : undefined,
+    profile.updatedAt !== undefined
+      ? `updatedAt: ${profile.updatedAt}`
+      : undefined,
   ]
     .filter((line): line is string => line !== undefined)
     .join("\n")}\n`;

@@ -29,9 +29,7 @@ export async function loadCprofIgnore(root: string): Promise<IgnorePolicy> {
   return createIgnorePolicy(parseIgnorePatterns(contents));
 }
 
-export function createIgnorePolicy(
-  patterns: readonly string[],
-): IgnorePolicy {
+export function createIgnorePolicy(patterns: readonly string[]): IgnorePolicy {
   const matcher = createIgnore().add([...patterns]);
 
   return {

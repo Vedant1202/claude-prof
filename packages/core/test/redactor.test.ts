@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { redactSecrets, shouldRedactString } from "../src/redactor.js";
+import {
+  redactSecrets,
+  redactSecretsAsync,
+  shouldRedactString,
+} from "../src/redactor.js";
 
 describe("shouldRedactString", () => {
   it("redacts by sensitive key name", () => {
@@ -9,25 +13,22 @@ describe("shouldRedactString", () => {
     );
   });
 
-  it("redacts known secret patterns", () => {
-    expect(
-      shouldRedactString("ghp_123456789012345678901234567890123456", [
-        "value",
-      ]),
-    ).toBe("known-pattern");
+  it("redacts camelCase sensitive key names", () => {
+    expect(shouldRedactString("hunter2", ["dbPassword"])).toBe("key-name");
+    expect(shouldRedactString("x", ["awsSecretAccessKey"])).toBe("key-name");
   });
 
   it("redacts JWT-shaped values", () => {
     const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature123";
 
-    expect(
-      shouldRedactString(jwt, ["authorization"]),
-    ).toBe("key-name");
+    expect(shouldRedactString(jwt, ["authorization"])).toBe("key-name");
     expect(shouldRedactString(jwt, ["value"])).toBe("jwt");
   });
 
   it("does not redact env placeholders", () => {
-    expect(shouldRedactString("${env:GITHUB_TOKEN}", ["token"])).toBeUndefined();
+    expect(
+      shouldRedactString("${env:GITHUB_TOKEN}", ["token"]),
+    ).toBeUndefined();
   });
 
   it("does not redact benign strings", () => {
@@ -87,5 +88,30 @@ describe("redactSecrets", () => {
       "a",
       "b",
     ]);
+  });
+});
+
+describe("redactSecretsAsync", () => {
+  it("redacts provider keys under non-sensitive keys (Layer A)", async () => {
+    const result = await redactSecretsAsync({
+      field: "ghp_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8",
+    });
+
+    expect((result.value as Record<string, unknown>).field).toBe(
+      "${env:FIELD}",
+    );
+  });
+
+  it("is deterministic for the same input", async () => {
+    const input = {
+      b: { token: "ghp_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8" },
+      a: "https://example.com/path",
+      list: ["sonnet", "aZ9qLmN8vB2xC7pR5tY3uI0oP6sD4fG1"],
+    };
+
+    const first = await redactSecretsAsync(input);
+    const second = await redactSecretsAsync(input);
+
+    expect(JSON.stringify(first)).toBe(JSON.stringify(second));
   });
 });

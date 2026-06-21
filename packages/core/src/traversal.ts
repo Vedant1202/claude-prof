@@ -21,7 +21,11 @@ export const BUILT_IN_NEVER_READ_PATTERNS = [
   ".claude/history.jsonl",
 ] as const;
 
-export type SkipReason = "ignored" | "never-read" | "symlink" | "symlink-escape";
+export type SkipReason =
+  | "ignored"
+  | "never-read"
+  | "symlink"
+  | "symlink-escape";
 
 export interface SafeTraversalEntry {
   readonly path: string;
@@ -67,7 +71,11 @@ export async function collectSafePaths(
       const matchOptions = { directory, root };
 
       if (neverReadPolicy.ignores(candidatePath, matchOptions)) {
-        skipped.push({ path: candidatePath, relativePath, reason: "never-read" });
+        skipped.push({
+          path: candidatePath,
+          relativePath,
+          reason: "never-read",
+        });
         continue;
       }
 

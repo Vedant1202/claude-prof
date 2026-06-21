@@ -10,6 +10,8 @@ import {
   findMissingSecrets,
   resolveEnvPlaceholders,
 } from "./install-safety.js";
+import { isRecord } from "./record-utils.js";
+import { isInsideRoot } from "./traversal.js";
 import type {
   InstallConflict,
   InstallExitCode,
@@ -57,6 +59,26 @@ export async function installProfile(
     env: options.env ?? process.env,
   };
   const plan = await createInstallPlan(context);
+
+  // Defense in depth against path traversal via crafted section keys: the schema
+  // forbids path separators in key names, but we never write a path that escapes
+  // the allowed roots even if a key slips validation.
+  const homeClaudeJson = join(resolve(options.homeDir), ".claude.json");
+  const escapingWrites = plan.writes.filter(
+    (write) => !isWriteContained(write.path, context, homeClaudeJson),
+  );
+
+  if (escapingWrites.length > 0) {
+    return createFailureResult({
+      exitCode: 3,
+      dryRun: options.dryRun === true,
+      skipped: plan.skipped,
+      errors: escapingWrites.map(
+        (write) => `refusing to write outside target roots: ${write.path}`,
+      ),
+    });
+  }
+
   const missingSecrets = findMissingSecrets(profileRead.profile, context.env);
 
   if (missingSecrets.length > 0) {
@@ -69,7 +91,7 @@ export async function installProfile(
     });
   }
 
-  const leakCheck = checkGeneratedOutputForLeaks(
+  const leakCheck = await checkGeneratedOutputForLeaks(
     plan.writes
       .filter((write) => !write.contents.includes("${env:"))
       .map((write) => ({ path: write.path, contents: write.contents })),
@@ -117,7 +139,14 @@ export async function installProfile(
   if (options.dryRun !== true) {
     for (const write of resolvedWrites) {
       await mkdir(dirname(write.path), { recursive: true });
-      await writeFile(write.path, write.contents, "utf8");
+
+      if (write.section === "mcpServers") {
+        // Merge into the target document so we never clobber unrelated keys —
+        // critical for ~/.claude.json, which holds the user's wider state.
+        await writeMergedMcpServers(write.path, write.contents);
+      } else {
+        await writeFile(write.path, write.contents, "utf8");
+      }
     }
     await recordInstalledProfile(statePathForContext(context), {
       name: context.profile.name,
@@ -312,4 +341,49 @@ function toPublicWrite(write: PlannedWrite): InstallWrite {
 
 function formatTimestamp(date: Date): string {
   return date.toISOString().replace(/[:.]/g, "-");
+}
+
+function isWriteContained(
+  path: string,
+  context: PlanContext,
+  homeClaudeJson: string,
+): boolean {
+  return (
+    isInsideRoot(context.projectRoot, path) ||
+    isInsideRoot(context.claudeHome, path) ||
+    path === homeClaudeJson
+  );
+}
+
+async function writeMergedMcpServers(
+  path: string,
+  contents: string,
+): Promise<void> {
+  const incoming = JSON.parse(contents) as { mcpServers?: unknown };
+  const existing = await readJsonObject(path);
+  const existingServers = isRecord(existing.mcpServers)
+    ? existing.mcpServers
+    : {};
+  const incomingServers = isRecord(incoming.mcpServers)
+    ? incoming.mcpServers
+    : {};
+  const merged = {
+    ...existing,
+    mcpServers: { ...existingServers, ...incomingServers },
+  };
+
+  await writeFile(path, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
+}
+
+async function readJsonObject(path: string): Promise<Record<string, unknown>> {
+  try {
+    const parsed = JSON.parse(await readFile(path, "utf8")) as unknown;
+    return isRecord(parsed) ? parsed : {};
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return {};
+    }
+
+    throw error;
+  }
 }

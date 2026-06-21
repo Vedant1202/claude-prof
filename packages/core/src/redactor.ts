@@ -1,3 +1,5 @@
+import { detectProviderSecret } from "./detector.js";
+
 export type RedactionReason =
   | "key-name"
   | "known-pattern"
@@ -27,22 +29,70 @@ export interface RedactionResult {
 const SENSITIVE_KEY_PATTERN =
   /(^|_|-)(api[_-]?key|auth|authorization|credential|key|password|secret|token)(_|-|$)/i;
 
-const KNOWN_SECRET_PATTERNS = [
-  /sk-[A-Za-z0-9_-]{16,}/,
-  /gh[pousr]_[A-Za-z0-9_]{20,}/,
-  /ghs_[A-Za-z0-9_]{20,}/,
-  /xox[baprs]-[A-Za-z0-9-]{16,}/,
-  /AKIA[0-9A-Z]{16}/,
-] as const;
-
 const ENV_PLACEHOLDER_PATTERN = /^\$\{env:[A-Za-z_][A-Za-z0-9_]*}$/;
 const JWT_PATTERN =
   /^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$/;
 
+type RedactionDecision = (
+  value: string,
+  path: readonly string[],
+) => RedactionReason | undefined;
+
+const PROVIDER_SCAN_CONCURRENCY = 8;
+
 export function redactSecrets(value: unknown): RedactionResult {
+  return runRedaction(value, shouldRedactString);
+}
+
+/**
+ * Async redaction adding Layer A (secretlint provider-key detection) on top of
+ * the synchronous key-name (B) and entropy/JWT (C) heuristics. Layer A only runs
+ * for values the sync layers do not already flag (short-circuit, D7), with bounded
+ * concurrency. The rewrite itself stays synchronous and deterministic.
+ */
+export async function redactSecretsAsync(
+  value: unknown,
+): Promise<RedactionResult> {
+  const providerFlagged = new Set<string>();
+
+  await mapWithConcurrency(
+    collectStrings(value, []),
+    PROVIDER_SCAN_CONCURRENCY,
+    async (entry) => {
+      if (isStructuralManifestPath(entry.path)) {
+        return; // never scan manifest scaffolding ($schema, version, hashes)
+      }
+      if (shouldRedactString(entry.value, entry.path) !== undefined) {
+        return; // already covered by Layer B/C — skip the secretlint call
+      }
+      if (await detectProviderSecret(entry.value)) {
+        providerFlagged.add(formatPath(entry.path));
+      }
+    },
+  );
+
+  return runRedaction(value, (stringValue, path) => {
+    const syncReason = shouldRedactString(stringValue, path);
+    if (syncReason !== undefined) {
+      return syncReason;
+    }
+    return providerFlagged.has(formatPath(path)) ? "known-pattern" : undefined;
+  });
+}
+
+function runRedaction(
+  value: unknown,
+  decide: RedactionDecision,
+): RedactionResult {
   const redactions: Redaction[] = [];
   const requiredSecrets = new Set<string>();
-  const redactedValue = redactNode(value, [], redactions, requiredSecrets);
+  const redactedValue = redactNode(
+    value,
+    [],
+    redactions,
+    requiredSecrets,
+    decide,
+  );
 
   return {
     value: redactedValue,
@@ -51,6 +101,44 @@ export function redactSecrets(value: unknown): RedactionResult {
       left.path.localeCompare(right.path),
     ),
   };
+}
+
+interface StringEntry {
+  readonly path: readonly string[];
+  readonly value: string;
+}
+
+function collectStrings(
+  value: unknown,
+  path: readonly string[],
+): StringEntry[] {
+  if (typeof value === "string") {
+    return [{ path, value }];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) =>
+      collectStrings(item, [...path, String(index)]),
+    );
+  }
+
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, item]) =>
+      collectStrings(item, [...path, key]),
+    );
+  }
+
+  return [];
+}
+
+async function mapWithConcurrency<T>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let start = 0; start < items.length; start += limit) {
+    await Promise.all(items.slice(start, start + limit).map(worker));
+  }
 }
 
 export function shouldRedactString(
@@ -65,12 +153,10 @@ export function shouldRedactString(
     return undefined;
   }
 
-  if (keyPath.some((key) => SENSITIVE_KEY_PATTERN.test(key))) {
+  // Provider-key detection (the old hand-rolled prefix list) now lives in
+  // detector.ts (secretlint, Layer A) and runs in the async redaction path.
+  if (keyPath.some((key) => SENSITIVE_KEY_PATTERN.test(normalizeKey(key)))) {
     return "key-name";
-  }
-
-  if (KNOWN_SECRET_PATTERNS.some((pattern) => pattern.test(value))) {
-    return "known-pattern";
   }
 
   if (JWT_PATTERN.test(value)) {
@@ -89,9 +175,10 @@ function redactNode(
   path: readonly string[],
   redactions: Redaction[],
   requiredSecrets: Set<string>,
+  decide: RedactionDecision,
 ): RedactedProfileValue {
   if (typeof value === "string") {
-    const reason = shouldRedactString(value, path);
+    const reason = decide(value, path);
 
     if (reason === undefined) {
       return value;
@@ -118,7 +205,13 @@ function redactNode(
 
   if (Array.isArray(value)) {
     return value.map((item, index) =>
-      redactNode(item, [...path, String(index)], redactions, requiredSecrets),
+      redactNode(
+        item,
+        [...path, String(index)],
+        redactions,
+        requiredSecrets,
+        decide,
+      ),
     );
   }
 
@@ -128,7 +221,7 @@ function redactNode(
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([key, item]) => [
           key,
-          redactNode(item, [...path, key], redactions, requiredSecrets),
+          redactNode(item, [...path, key], redactions, requiredSecrets, decide),
         ]),
     );
   }
@@ -152,13 +245,25 @@ function formatPath(path: readonly string[]): string {
   return path.length === 0 ? "/" : `/${path.join("/")}`;
 }
 
+function normalizeKey(key: string): string {
+  // Split camelCase so "dbPassword" -> "db_password" exposes the keyword
+  // boundary the sensitive-key pattern looks for.
+  return key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+}
+
 function isHighEntropy(value: string): boolean {
+  // Precision guards: secretlint (Layer A) covers known provider keys, so the
+  // entropy heuristic can lean conservative and skip values that merely look
+  // random — URLs, paths, hashes, and UUIDs — while still catching base64-ish
+  // secrets that contain "/".
   if (
     value.length < 32 ||
     /\s/.test(value) ||
-    value.includes("://") ||
-    value.includes("/") ||
-    value.includes("@")
+    looksLikeUrlOrPath(value) ||
+    isHexBlob(value) ||
+    isPrefixedHash(value) ||
+    isUuid(value) ||
+    characterClassCount(value) < 2
   ) {
     return false;
   }
@@ -171,6 +276,39 @@ function isHighEntropy(value: string): boolean {
   }, 0);
 
   return uniqueCharacters >= 16 && entropy >= 4;
+}
+
+function looksLikeUrlOrPath(value: string): boolean {
+  return (
+    value.includes("://") ||
+    value.includes("@") ||
+    /^(?:[A-Za-z]:[\\/]|\.{0,2}\/|~\/)/.test(value) ||
+    /\/[^/]*\.[A-Za-z0-9]{1,8}$/.test(value)
+  );
+}
+
+function isHexBlob(value: string): boolean {
+  return value.length >= 32 && /^[0-9a-fA-F]+$/.test(value);
+}
+
+function isPrefixedHash(value: string): boolean {
+  // Content digests like "sha256:<hex>" are not secrets — they appear verbatim
+  // in the manifest's asset entries and must not trip the leak-check.
+  return /^[A-Za-z0-9]+:[0-9a-fA-F]{32,}$/.test(value);
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+    value,
+  );
+}
+
+function characterClassCount(value: string): number {
+  let count = 0;
+  if (/[a-z]/.test(value)) count += 1;
+  if (/[A-Z]/.test(value)) count += 1;
+  if (/[0-9]/.test(value)) count += 1;
+  return count;
 }
 
 function countOccurrences(value: string, character: string): number {

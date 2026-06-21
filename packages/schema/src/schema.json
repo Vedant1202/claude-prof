@@ -50,12 +50,14 @@
     },
     "memory": {
       "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9._-]+$" },
       "additionalProperties": {
         "$ref": "#/$defs/profileItem"
       }
     },
     "rules": {
       "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9._-]+$" },
       "additionalProperties": {
         "$ref": "#/$defs/profileItem"
       }
@@ -68,18 +70,21 @@
     },
     "skills": {
       "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9._-]+$" },
       "additionalProperties": {
         "$ref": "#/$defs/profileItem"
       }
     },
     "commands": {
       "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9._-]+$" },
       "additionalProperties": {
         "$ref": "#/$defs/profileItem"
       }
     },
     "agents": {
       "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9._-]+$" },
       "additionalProperties": {
         "$ref": "#/$defs/profileItem"
       }

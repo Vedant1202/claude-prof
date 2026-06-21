@@ -85,5 +85,7 @@ async function readFixtureDirectory(
     }),
   );
 
-  return files.flat().sort((left, right) => left.path.localeCompare(right.path));
+  return files
+    .flat()
+    .sort((left, right) => left.path.localeCompare(right.path));
 }

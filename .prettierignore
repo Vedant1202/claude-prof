@@ -1,0 +1,14 @@
+# Generated / vendored — not formatted
+pnpm-lock.yaml
+**/dist/
+*.tsbuildinfo
+node_modules/
+repomix-output.xml
+
+# Byte-sensitive test fixtures (asserted verbatim)
+**/fixtures/
+
+# Local scratch / planning (gitignored)
+.tmp/
+.plans/
+references/

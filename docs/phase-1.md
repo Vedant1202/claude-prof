@@ -62,13 +62,26 @@ Diff ignores object key order, reports added/removed/changed paths, and redacts 
 
 ## Secret Safety
 
-Phase 1 uses three layers:
+cprof uses layered, fully offline secret protection:
 
-- Ignore policy: `.cprofignore` and built-in never-read paths are checked before reading files.
-- Redaction: safe-to-read values that look like secrets become `${env:NAME}`.
-- Leak check: generated manifest and bundled assets are checked again before write.
+- **Ignore policy**: `.cprofignore` and built-in never-read paths are checked before any file is read.
+- **Redaction** replaces secret-looking values with `${env:NAME}` placeholders using three detectors:
+  - **Provider keys** via [secretlint](https://github.com/secretlint/secretlint) — GitHub, Anthropic, OpenAI, Slack, Stripe, GCP, and more.
+  - **Sensitive key names** — e.g. `apiKey`, `dbPassword`, `AWS_SECRET_ACCESS_KEY` (camelCase and UPPER_SNAKE).
+  - **JWTs and high-entropy values** — base64/hex secrets, while excluding URLs, filesystem paths, content hashes, and UUIDs.
+- **Leak check**: the generated manifest and every bundled asset are re-scanned with secretlint before write. `cprof init` and `cprof refresh` refuse to write (exit code `3`) if anything still looks like a secret.
 
-Reports must not print raw secret values.
+Reports never print raw secret values.
+
+### What is and isn't detected
+
+Detected: known provider-key formats, values under secret-like keys, JWTs, and
+high-entropy base64/hex secrets (≥ 32 characters).
+
+Not detected: low-entropy or home-grown secrets under non-sensitive keys (e.g. a
+short memorable password stored under `note`), and AWS access-key IDs (`AKIA…`,
+which are identifiers rather than credentials — the AWS _secret_ key is caught).
+Redaction is best-effort; always review a generated profile before sharing it.
 
 ## Hook Inventory
 

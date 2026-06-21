@@ -61,7 +61,7 @@ export async function bundleAssets(
     }
 
     const output = await readAssetOutput(asset, outputRoot, options);
-    const leakCheck = checkGeneratedOutputForLeaks(
+    const leakCheck = await checkGeneratedOutputForLeaks(
       output.files.map((file) => ({
         path: file.destination,
         contents: file.contents,

@@ -90,23 +90,31 @@ export function checkInstalledProfileUpdates(
             : ("update-available" as const),
       };
     })
-    .sort((left, right) => left.installed.name.localeCompare(right.installed.name));
+    .sort((left, right) =>
+      left.installed.name.localeCompare(right.installed.name),
+    );
 }
 
 function normalizeState(value: unknown): InstalledProfileState {
-  if (!isRecord(value) || value.version !== 1 || !Array.isArray(value.installs)) {
+  if (
+    !isRecord(value) ||
+    value.version !== 1 ||
+    !Array.isArray(value.installs)
+  ) {
     return { version: 1, installs: [] };
   }
 
   return {
     version: 1,
-    installs: value.installs.filter(isInstalledProfileRecord).sort((left, right) =>
-      left.name.localeCompare(right.name),
-    ),
+    installs: value.installs
+      .filter(isInstalledProfileRecord)
+      .sort((left, right) => left.name.localeCompare(right.name)),
   };
 }
 
-function isInstalledProfileRecord(value: unknown): value is InstalledProfileRecord {
+function isInstalledProfileRecord(
+  value: unknown,
+): value is InstalledProfileRecord {
   return (
     isRecord(value) &&
     typeof value.name === "string" &&

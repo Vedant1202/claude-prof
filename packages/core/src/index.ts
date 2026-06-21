@@ -34,12 +34,14 @@ export {
 } from "./traversal.js";
 export {
   redactSecrets,
+  redactSecretsAsync,
   shouldRedactString,
   type RedactedProfileValue,
   type Redaction,
   type RedactionReason,
   type RedactionResult,
 } from "./redactor.js";
+export { detectProviderSecret } from "./detector.js";
 export {
   checkGeneratedOutputForLeaks,
   type GeneratedOutput,
@@ -56,6 +58,7 @@ export {
 export {
   buildManifest,
   buildManifestWithRedactions,
+  buildManifestWithRedactionsAsync,
   type BuildManifestInput,
   type BuildManifestResult,
   type ManifestSectionMap,

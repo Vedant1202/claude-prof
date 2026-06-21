@@ -49,7 +49,9 @@ function diffValue(
   const diffPath = formatPath(path);
 
   if (before === undefined) {
-    return [{ kind: "added", path: diffPath, after: sanitizeValue(after, path) }];
+    return [
+      { kind: "added", path: diffPath, after: sanitizeValue(after, path) },
+    ];
   }
 
   if (after === undefined) {
@@ -88,7 +90,9 @@ function sanitizeValue(value: unknown, path: readonly string[]): unknown {
   }
 
   if (Array.isArray(value)) {
-    return value.map((item, index) => sanitizeValue(item, [...path, String(index)]));
+    return value.map((item, index) =>
+      sanitizeValue(item, [...path, String(index)]),
+    );
   }
 
   if (isPlainObject(value)) {
@@ -104,7 +108,9 @@ function sanitizeValue(value: unknown, path: readonly string[]): unknown {
 
 function formatValue(value: unknown): string {
   const formatted =
-    typeof value === "string" ? value : stableStringify(value) ?? String(value);
+    typeof value === "string"
+      ? value
+      : (stableStringify(value) ?? String(value));
 
   return formatted.length > 120 ? `${formatted.slice(0, 117)}...` : formatted;
 }

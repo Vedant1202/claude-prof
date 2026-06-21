@@ -47,7 +47,9 @@ export interface CprofProfile {
   readonly settings?: Readonly<Record<string, unknown>>;
   readonly memory?: Readonly<Record<string, ProfileItem>>;
   readonly rules?: Readonly<Record<string, ProfileItem>>;
-  readonly plugins?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+  readonly plugins?: Readonly<
+    Record<string, Readonly<Record<string, unknown>>>
+  >;
   readonly skills?: Readonly<Record<string, ProfileItem>>;
   readonly commands?: Readonly<Record<string, ProfileItem>>;
   readonly agents?: Readonly<Record<string, ProfileItem>>;

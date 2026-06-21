@@ -3,8 +3,12 @@ import { join, resolve } from "node:path";
 import type { CprofProfile } from "@cprof/schema";
 
 import { bundleAssets, type AssetBundleResult } from "./bundler.js";
+import {
+  checkGeneratedOutputForLeaks,
+  type LeakCheckResult,
+} from "./leak-check.js";
 import { loadCprofIgnore } from "./ignore.js";
-import { buildManifestWithRedactions } from "./manifest.js";
+import { buildManifestWithRedactionsAsync } from "./manifest.js";
 import { readInstalledPlugins } from "./plugins.js";
 import type { ScanReportInput } from "./report.js";
 import { nonEmptyRecord } from "./record-utils.js";
@@ -42,6 +46,10 @@ export interface ScanClaudeProfileResult {
   readonly manifest: CprofProfile;
   readonly report: ScanReportInput;
   readonly bundle: AssetBundleResult;
+  // Independent re-scan of the generated manifest — should always be clean
+  // because redaction already ran; a non-clean result means redaction missed a
+  // secret and the caller must refuse to write.
+  readonly leakCheck: LeakCheckResult;
 }
 
 export async function scanClaudeProfile(
@@ -84,7 +92,7 @@ export async function scanClaudeProfile(
     ignorePolicy: sourceIgnorePolicy,
   });
   const bundledItems = toManifestItemsFromBundle(bundle, assets);
-  const manifestResult = buildManifestWithRedactions({
+  const manifestResult = await buildManifestWithRedactionsAsync({
     name: options.name,
     version: options.version,
     description: options.description,
@@ -104,9 +112,17 @@ export async function scanClaudeProfile(
     mcpServers: nonEmptyRecord(sections.mcpServers),
   });
 
+  const leakCheck = await checkGeneratedOutputForLeaks([
+    {
+      path: "claude-profile.json",
+      contents: `${JSON.stringify(manifestResult.manifest, null, 2)}\n`,
+    },
+  ]);
+
   return {
     manifest: manifestResult.manifest,
     bundle,
+    leakCheck,
     report: {
       detected: createDetectedCounts(sections),
       redactions: manifestResult.redactions,

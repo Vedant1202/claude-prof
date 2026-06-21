@@ -122,12 +122,16 @@ function addJsonWrite(
           ? join(resolve(context.claudeHome, ".."), ".claude.json")
           : join(context.projectRoot, ".mcp.json");
 
+    // MCP config nests servers under an "mcpServers" key in both .mcp.json and
+    // ~/.claude.json; settings are stored at the document root.
+    const payload = section === "mcpServers" ? { mcpServers: value } : value;
+
     writes.push({
       source: "generated",
       section,
       name,
       path,
-      contents: `${JSON.stringify(value, null, 2)}\n`,
+      contents: `${JSON.stringify(payload, null, 2)}\n`,
     });
   }
 }

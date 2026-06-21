@@ -101,6 +101,9 @@ describe("scanClaudeProfile", () => {
     );
     expect(result.manifest.secrets?.required).toEqual(["GITHUB_TOKEN"]);
     expect(result.report.redactions).toHaveLength(1);
+    // The generated manifest re-scans clean: redaction handled the secret, and
+    // asset hashes / URLs do not trip the leak-check.
+    expect(result.leakCheck.ok).toBe(true);
     await expect(
       readFile(join(project, "commands", "deploy", "deploy.md"), "utf8"),
     ).resolves.toBe("Deploy command\n");
