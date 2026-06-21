@@ -3,6 +3,10 @@
 Spec: `.plans/docs-site-spec.md` · Plan: `tasks/docs-site-plan.md` · Branch: fresh off `origin/main`
 No TDD (docs site) — verify each task with `corepack pnpm --filter @cprof/docs build`.
 Legend: `[ ]` todo · `[x]` done · ⟂ checkpoint.
+**Markdown convention** (decided 2026-06-21): author pages as plain `.md` (CommonMark) so prose
+tokens (`${env:NAME}`, `<file>`, generics) render literally; reserve `.mdx` only for pages that
+genuinely need `:::` admonitions / tabs / JSX. The global alpha notice lives in `announcementBar`;
+use blockquotes for light callouts inside `.md` pages.
 
 - [x] **T1 — Scaffold + markdown pipeline**: Docusaurus 3.10.1 (TS) in `website/` (`@cprof/docs`); added to
       `pnpm-workspace.yaml`; blog disabled; GH-Pages base path (`baseUrl: /claude-prof/`, `url`,
