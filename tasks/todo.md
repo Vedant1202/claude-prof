@@ -4,15 +4,15 @@ Spec: `.plans/f3-redaction-spec.md` · Plan: `tasks/plan.md` · Branch: `wave-0-
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop & confirm)
 
 ## Phase 0 — Foundation
-- [ ] T0.1 Add `@secretlint/core` + `@secretlint/secretlint-rule-preset-recommend` to `@cprof/core`; update lockfile; build green
-- [ ] T0.2 Add labelled fixture corpus (`MUST_REDACT` / `MUST_NOT_REDACT`) to `@cprof/testing`
-- [ ] ⟂ Checkpoint A — deps resolve offline, build green, corpus committed
+- [x] T0.1 Add `@secretlint/core` + `@secretlint/secretlint-rule-preset-recommend` to `@cprof/core`; update lockfile; build green
+- [x] T0.2 Add labelled redaction corpus (`REDACTION_CORPUS`) — placed in `core/test` (not `@cprof/testing`, which would cycle)
+- [x] ⟂ Checkpoint A — deps resolve offline, build green, corpus committed
 
 ## Phase 1 — Provider detection, one secret end-to-end
-- [ ] T1.1 (red) failing test: `sk-ant-…` manifest value redacted via async snapshot path
-- [ ] T1.2 `detector.ts` — secretlint config built once + `detectProviderSecret(value): Promise<boolean>` (offline)
-- [ ] T1.3 `redactSecretsAsync` (B+C ∪ A, short-circuit per D7) + `buildManifestWithRedactionsAsync`; wire `scanner.ts`
-- [ ] ⟂ Checkpoint B — end-to-end async redaction for one provider; sync API untouched
+- [x] T1.1 integration test: provider key redacted via async manifest path + sync/async parity
+- [x] T1.2 `detector.ts` — secretlint config built once + `detectProviderSecret(value): Promise<boolean>` (offline)
+- [x] T1.3 `redactSecretsAsync` (B+C ∪ A, short-circuit per D7) + `buildManifestWithRedactionsAsync`; wire `scanner.ts`
+- [x] ⟂ Checkpoint B — end-to-end async redaction for one provider; sync API untouched
 
 ## Phase 2 — Breadth + precision tuning
 - [ ] T2.1 (red) full corpus assertions

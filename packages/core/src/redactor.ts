@@ -1,3 +1,5 @@
+import { detectProviderSecret } from "./detector.js";
+
 export type RedactionReason =
   | "key-name"
   | "known-pattern"
@@ -39,10 +41,63 @@ const ENV_PLACEHOLDER_PATTERN = /^\$\{env:[A-Za-z_][A-Za-z0-9_]*}$/;
 const JWT_PATTERN =
   /^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$/;
 
+type RedactionDecision = (
+  value: string,
+  path: readonly string[],
+) => RedactionReason | undefined;
+
+const PROVIDER_SCAN_CONCURRENCY = 8;
+
 export function redactSecrets(value: unknown): RedactionResult {
+  return runRedaction(value, shouldRedactString);
+}
+
+/**
+ * Async redaction adding Layer A (secretlint provider-key detection) on top of
+ * the synchronous key-name (B) and entropy/JWT (C) heuristics. Layer A only runs
+ * for values the sync layers do not already flag (short-circuit, D7), with bounded
+ * concurrency. The rewrite itself stays synchronous and deterministic.
+ */
+export async function redactSecretsAsync(
+  value: unknown,
+): Promise<RedactionResult> {
+  const providerFlagged = new Set<string>();
+
+  await mapWithConcurrency(
+    collectStrings(value, []),
+    PROVIDER_SCAN_CONCURRENCY,
+    async (entry) => {
+      if (shouldRedactString(entry.value, entry.path) !== undefined) {
+        return; // already covered by Layer B/C — skip the secretlint call
+      }
+      if (await detectProviderSecret(entry.value)) {
+        providerFlagged.add(formatPath(entry.path));
+      }
+    },
+  );
+
+  return runRedaction(value, (stringValue, path) => {
+    const syncReason = shouldRedactString(stringValue, path);
+    if (syncReason !== undefined) {
+      return syncReason;
+    }
+    return providerFlagged.has(formatPath(path)) ? "known-pattern" : undefined;
+  });
+}
+
+function runRedaction(
+  value: unknown,
+  decide: RedactionDecision,
+): RedactionResult {
   const redactions: Redaction[] = [];
   const requiredSecrets = new Set<string>();
-  const redactedValue = redactNode(value, [], redactions, requiredSecrets);
+  const redactedValue = redactNode(
+    value,
+    [],
+    redactions,
+    requiredSecrets,
+    decide,
+  );
 
   return {
     value: redactedValue,
@@ -51,6 +106,44 @@ export function redactSecrets(value: unknown): RedactionResult {
       left.path.localeCompare(right.path),
     ),
   };
+}
+
+interface StringEntry {
+  readonly path: readonly string[];
+  readonly value: string;
+}
+
+function collectStrings(
+  value: unknown,
+  path: readonly string[],
+): StringEntry[] {
+  if (typeof value === "string") {
+    return [{ path, value }];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) =>
+      collectStrings(item, [...path, String(index)]),
+    );
+  }
+
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, item]) =>
+      collectStrings(item, [...path, key]),
+    );
+  }
+
+  return [];
+}
+
+async function mapWithConcurrency<T>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let start = 0; start < items.length; start += limit) {
+    await Promise.all(items.slice(start, start + limit).map(worker));
+  }
 }
 
 export function shouldRedactString(
@@ -89,9 +182,10 @@ function redactNode(
   path: readonly string[],
   redactions: Redaction[],
   requiredSecrets: Set<string>,
+  decide: RedactionDecision,
 ): RedactedProfileValue {
   if (typeof value === "string") {
-    const reason = shouldRedactString(value, path);
+    const reason = decide(value, path);
 
     if (reason === undefined) {
       return value;
@@ -118,7 +212,13 @@ function redactNode(
 
   if (Array.isArray(value)) {
     return value.map((item, index) =>
-      redactNode(item, [...path, String(index)], redactions, requiredSecrets),
+      redactNode(
+        item,
+        [...path, String(index)],
+        redactions,
+        requiredSecrets,
+        decide,
+      ),
     );
   }
 
@@ -128,7 +228,7 @@ function redactNode(
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([key, item]) => [
           key,
-          redactNode(item, [...path, key], redactions, requiredSecrets),
+          redactNode(item, [...path, key], redactions, requiredSecrets, decide),
         ]),
     );
   }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildManifest } from "../src/manifest.js";
+import {
+  buildManifest,
+  buildManifestWithRedactionsAsync,
+} from "../src/manifest.js";
 import { createProfileSourceMetadata } from "../src/sources.js";
 import { validateProfile } from "../src/validate.js";
 
@@ -75,5 +78,45 @@ describe("buildManifest", () => {
     });
 
     expect(Object.keys(manifest.commands ?? {})).toEqual(["alpha", "zed"]);
+  });
+});
+
+describe("buildManifestWithRedactionsAsync", () => {
+  it("redacts a provider key under a non-sensitive key", async () => {
+    // "editorHint" is not a sensitive key name, so this exercises value-based
+    // detection (Layer A / entropy), not the key-name heuristic.
+    const { manifest } = await buildManifestWithRedactionsAsync({
+      name: "async-secret",
+      version: "1.0.0",
+      sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+      settings: {
+        editorHint: "ghp_123456789012345678901234567890123456",
+      },
+    });
+
+    expect(JSON.stringify(manifest)).not.toContain("ghp_1234567890");
+    expect((manifest.settings as Record<string, unknown>).editorHint).toBe(
+      "${env:EDITOR_HINT}",
+    );
+    expect(manifest.secrets?.required).toContain("EDITOR_HINT");
+    expect(validateProfile(manifest)).toMatchObject({ valid: true });
+  });
+
+  it("matches the sync builder for secret-free content (determinism)", async () => {
+    const input = {
+      name: "parity-profile",
+      version: "1.0.0",
+      sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+      commands: {
+        zed: { source: "./commands/zed.md" },
+        alpha: { source: "./commands/alpha.md" },
+      },
+    };
+
+    const sync = buildManifest(input);
+    const { manifest: asyncManifest } =
+      await buildManifestWithRedactionsAsync(input);
+
+    expect(asyncManifest).toEqual(sync);
   });
 });

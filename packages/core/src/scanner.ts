@@ -4,7 +4,7 @@ import type { CprofProfile } from "@cprof/schema";
 
 import { bundleAssets, type AssetBundleResult } from "./bundler.js";
 import { loadCprofIgnore } from "./ignore.js";
-import { buildManifestWithRedactions } from "./manifest.js";
+import { buildManifestWithRedactionsAsync } from "./manifest.js";
 import { readInstalledPlugins } from "./plugins.js";
 import type { ScanReportInput } from "./report.js";
 import { nonEmptyRecord } from "./record-utils.js";
@@ -84,7 +84,7 @@ export async function scanClaudeProfile(
     ignorePolicy: sourceIgnorePolicy,
   });
   const bundledItems = toManifestItemsFromBundle(bundle, assets);
-  const manifestResult = buildManifestWithRedactions({
+  const manifestResult = await buildManifestWithRedactionsAsync({
     name: options.name,
     version: options.version,
     description: options.description,
