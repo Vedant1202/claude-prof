@@ -30,6 +30,7 @@ use blockquotes for light callouts inside `.md` pages.
 - [ ] ⟂ **Checkpoint C** — docs site complete; ready to commit/PR
 
 ## Deferred / out of scope
+
 - [ ] i18n, blog, custom domain, hosted Algolia (swap from local search later), branded OG image
 - [ ] Retire/redirect the existing `docs/*.md` engineering notes
 - [ ] Generate the Commands reference from `cprof --help` (keep docs in sync) — future

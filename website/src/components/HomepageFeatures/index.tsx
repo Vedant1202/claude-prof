@@ -1,7 +1,7 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
-import Heading from '@theme/Heading';
-import styles from './styles.module.css';
+import type { ReactNode } from "react";
+import clsx from "clsx";
+import Heading from "@theme/Heading";
+import styles from "./styles.module.css";
 
 type FeatureItem = {
   title: string;
@@ -12,8 +12,8 @@ type FeatureItem = {
 // Minimal, on-brand home cards (T1). The full landing/IA lands in T2.
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Snapshot',
-    emoji: '📸',
+    title: "Snapshot",
+    emoji: "📸",
     description: (
       <>
         Capture your Claude Code setup — settings, MCP servers, subagents, and
@@ -22,19 +22,19 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Scrub',
-    emoji: '🧼',
+    title: "Scrub",
+    emoji: "🧼",
     description: (
       <>
         Secrets are redacted on the way out — secretlint plus heuristics, aware
-        of <code>{'${env:VAR}'}</code> placeholders — and the manifest is
+        of <code>{"${env:VAR}"}</code> placeholders — and the manifest is
         re-scanned before it&apos;s written.
       </>
     ),
   },
   {
-    title: 'Migrate',
-    emoji: '🚚',
+    title: "Migrate",
+    emoji: "🚚",
     description: (
       <>
         Carry the profile to another machine and install it with a deep merge
@@ -44,11 +44,11 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({title, emoji, description}: FeatureItem) {
+function Feature({ title, emoji, description }: FeatureItem) {
   return (
-    <div className={clsx('col col--4')}>
+    <div className={clsx("col col--4")}>
       <div className="text--center">
-        <span style={{fontSize: '3rem'}} role="img" aria-label={title}>
+        <span style={{ fontSize: "3rem" }} role="img" aria-label={title}>
           {emoji}
         </span>
       </div>

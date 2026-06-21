@@ -5,6 +5,10 @@ pnpm-lock.yaml
 node_modules/
 repomix-output.xml
 
+# Docusaurus build output (generated)
+website/build/
+website/.docusaurus/
+
 # Byte-sensitive test fixtures (asserted verbatim)
 **/fixtures/
 
