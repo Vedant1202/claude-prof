@@ -34,9 +34,9 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 4 — Docs + close-out
 
-- [ ] T4.1 update `docs/phase-1.md` + README "what we detect / what we don't" table
-- [ ] T4.2 exports + `pnpm audit` + full build/test/lint/format green + memory note
-- [ ] ⟂ Checkpoint E — Wave 1 complete; ready to commit/PR
+- [x] T4.1 updated `docs/phase-1.md` + README with "what is and isn't detected"
+- [x] T4.2 exports done; `pnpm audit` clean; build/test/lint/format green; memory updated
+- [x] ⟂ Checkpoint E — Wave 1 complete; ready to commit/PR
 
 ## Deferred (not this wave)
 
