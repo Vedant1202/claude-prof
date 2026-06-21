@@ -1,6 +1,12 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
-import { validateProfile } from "@cprof/core";
+import {
+  createProfileGitignore,
+  createScanReport,
+  validateProfile,
+  type ScanClaudeProfileResult,
+} from "@cprof/core";
 import type { CprofProfile } from "@cprof/schema";
 
 export type CommandWriter = Pick<NodeJS.WriteStream, "write">;
@@ -49,6 +55,81 @@ export function emitJson(
   fields: Readonly<Record<string, unknown>> = {},
 ): void {
   stdout.write(`${JSON.stringify({ command, ok, ...fields }, null, 2)}\n`);
+}
+
+export interface FinalizeProfileWriteInput {
+  readonly command: string;
+  readonly cwd: string;
+  readonly scan: ScanClaudeProfileResult;
+  readonly json: boolean;
+  readonly quiet: boolean;
+  /** Human confirmation written to stderr on success (suppressed by --quiet). */
+  readonly successMessage: string;
+  readonly stdout: CommandWriter;
+  readonly stderr: CommandWriter;
+}
+
+/**
+ * Shared tail for `init` and `refresh`: validate the scanned manifest, refuse to
+ * write if leak-check found a secret, otherwise write the profile + .gitignore +
+ * scan report, and report success (JSON envelope, or the human message unless
+ * --quiet). Centralizes the security-critical leak gate so the two commands
+ * cannot diverge.
+ */
+export async function finalizeProfileWrite(
+  input: FinalizeProfileWriteInput,
+): Promise<number> {
+  const { command, cwd, scan, json, stdout, stderr } = input;
+  const { manifest, leakCheck } = scan;
+  const validation = validateProfile(manifest);
+
+  if (!validation.valid) {
+    if (json) {
+      emitJson(stdout, command, false, { errors: validation.errors });
+    } else {
+      stderr.write(`${validation.errors.join("\n")}\n`);
+    }
+    return validation.exitCode;
+  }
+
+  if (!leakCheck.ok) {
+    const leakedPaths = [...new Set(leakCheck.leaks.map((leak) => leak.path))];
+    if (json) {
+      emitJson(stdout, command, false, {
+        leakCheck: { ok: false, leaks: leakCheck.leaks },
+      });
+    } else {
+      stderr.write(
+        `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
+      );
+    }
+    return 3;
+  }
+
+  await writeFile(
+    join(cwd, "claude-profile.json"),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    "utf8",
+  );
+  await writeFile(join(cwd, ".gitignore"), createProfileGitignore(), "utf8");
+  await writeFile(
+    join(cwd, "cprof-scan-report.txt"),
+    createScanReport(scan.report),
+    "utf8",
+  );
+
+  if (json) {
+    emitJson(stdout, command, true, {
+      profilePath: "claude-profile.json",
+      profileScope: manifest.profileScope,
+      includesGlobal: manifest.includesGlobal,
+      leakCheck: { ok: true, leaks: [] },
+    });
+  } else if (!input.quiet) {
+    stderr.write(`${input.successMessage}\n`);
+  }
+
+  return 0;
 }
 
 export type ReadProfileFileResult =

@@ -1,15 +1,9 @@
-import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, resolve } from "node:path";
 
-import {
-  createProfileGitignore,
-  createScanReport,
-  scanClaudeProfile,
-  validateProfile,
-} from "@cprof/core";
+import { scanClaudeProfile } from "@cprof/core";
 
-import { emitJson, parseCommonFlags } from "../command-utils.js";
+import { finalizeProfileWrite, parseCommonFlags } from "../command-utils.js";
 
 export interface InitCommandOptions {
   readonly cwd: string;
@@ -39,66 +33,19 @@ export async function runInit(
     mode: parsed.mode,
     includeGlobal: parsed.mode === "project" ? parsed.includeGlobal : false,
   });
-  const manifest = scan.manifest;
-  const validation = validateProfile(manifest);
 
-  if (!validation.valid) {
-    if (json) {
-      emitJson(options.stdout, "init", false, { errors: validation.errors });
-    } else {
-      options.stderr.write(`${validation.errors.join("\n")}\n`);
-    }
-    return validation.exitCode;
-  }
-
-  if (!scan.leakCheck.ok) {
-    const leakedPaths = [
-      ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
-    ];
-    if (json) {
-      emitJson(options.stdout, "init", false, {
-        leakCheck: { ok: false, leaks: scan.leakCheck.leaks },
-      });
-    } else {
-      options.stderr.write(
-        `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
-      );
-    }
-    return 3;
-  }
-
-  await writeFile(
-    join(options.cwd, "claude-profile.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, ".gitignore"),
-    createProfileGitignore(),
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, "cprof-scan-report.txt"),
-    createScanReport(scan.report),
-    "utf8",
-  );
-
-  if (json) {
-    emitJson(options.stdout, "init", true, {
-      profilePath: "claude-profile.json",
-      profileScope: manifest.profileScope,
-      includesGlobal: manifest.includesGlobal,
-      leakCheck: { ok: true, leaks: [] },
-    });
-  } else if (!quiet) {
-    options.stderr.write(
-      `Wrote claude-profile.json (${manifest.profileScope}${
-        manifest.includesGlobal ? " + global" : ""
-      })\n`,
-    );
-  }
-
-  return 0;
+  return finalizeProfileWrite({
+    command: "init",
+    cwd: options.cwd,
+    scan,
+    json,
+    quiet,
+    successMessage: `Wrote claude-profile.json (${scan.manifest.profileScope}${
+      scan.manifest.includesGlobal ? " + global" : ""
+    })`,
+    stdout: options.stdout,
+    stderr: options.stderr,
+  });
 }
 
 type ParsedInitFlags =

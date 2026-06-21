@@ -1,16 +1,11 @@
-import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import {
-  createProfileGitignore,
-  createScanReport,
-  scanClaudeProfile,
-  validateProfile,
-} from "@cprof/core";
+import { scanClaudeProfile } from "@cprof/core";
 
 import {
   emitJson,
+  finalizeProfileWrite,
   parseCommonFlags,
   readProfileFile,
   type CommandWriter,
@@ -60,59 +55,15 @@ export async function runRefresh(
         ? existing.profile.includesGlobal
         : false,
   });
-  const refreshed = scan.manifest;
-  const validation = validateProfile(refreshed);
 
-  if (!validation.valid) {
-    if (json) {
-      emitJson(options.stdout, "refresh", false, { errors: validation.errors });
-    } else {
-      options.stderr.write(`${validation.errors.join("\n")}\n`);
-    }
-    return validation.exitCode;
-  }
-
-  if (!scan.leakCheck.ok) {
-    const leakedPaths = [
-      ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
-    ];
-    if (json) {
-      emitJson(options.stdout, "refresh", false, {
-        leakCheck: { ok: false, leaks: scan.leakCheck.leaks },
-      });
-    } else {
-      options.stderr.write(
-        `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
-      );
-    }
-    return 3;
-  }
-
-  await writeFile(
-    profilePath,
-    `${JSON.stringify(refreshed, null, 2)}\n`,
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, ".gitignore"),
-    createProfileGitignore(),
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, "cprof-scan-report.txt"),
-    createScanReport(scan.report),
-    "utf8",
-  );
-
-  if (json) {
-    emitJson(options.stdout, "refresh", true, {
-      profilePath: "claude-profile.json",
-      profileScope: refreshed.profileScope,
-      includesGlobal: refreshed.includesGlobal,
-      leakCheck: { ok: true, leaks: [] },
-    });
-  } else if (!quiet) {
-    options.stderr.write("Refreshed claude-profile.json\n");
-  }
-  return 0;
+  return finalizeProfileWrite({
+    command: "refresh",
+    cwd: options.cwd,
+    scan,
+    json,
+    quiet,
+    successMessage: "Refreshed claude-profile.json",
+    stdout: options.stdout,
+    stderr: options.stderr,
+  });
 }
