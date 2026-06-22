@@ -62,6 +62,29 @@ install in `.cprof-state.json`. Each write is reported as `created`, `merged`, o
 `overwritten`. A missing required secret fails the install before any write. Exit
 code `1` on usage errors.
 
+## `cprof rollback`
+
+Strictly undo the most recent install in a scope — a transaction, not a partial
+edit. Restores merged/overwritten files from their backup and moves created files
+to a trash dir (`.cprof-trash/<timestamp>/`, never a hard delete). With `--undo`,
+re-applies the most recent rolled-back install instead, so the last install is a
+reversible toggle.
+
+```bash
+cprof rollback [--undo] [--force] [--dry-run] [--global]
+```
+
+- `--undo` — re-apply the last rolled-back install (the reverse direction).
+- `--force` — proceed even if a touched file changed since install.
+- `--dry-run` — print the plan; change nothing.
+- `--global` — act on the `~/.claude` ledger instead of the project.
+
+**Change-guard:** before touching anything, every recorded file is checked against
+the state it should be in. If **any** file changed since install, the whole
+operation aborts and names the offenders — `--force` overrides. It is strictly
+single-level (the last install only) and never per-file. Exit codes: `0` done ·
+`1` usage · `2` nothing to roll back · `3` aborted (a file changed; use `--force`).
+
 ## `cprof validate`
 
 Validate a profile against the schema.
