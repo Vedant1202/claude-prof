@@ -5,6 +5,7 @@ import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
 import { runProfiles } from "./commands/profiles.js";
 import { runRefresh } from "./commands/refresh.js";
+import { runRollback } from "./commands/rollback.js";
 import { runScan } from "./commands/scan.js";
 import { runValidate } from "./commands/validate.js";
 
@@ -113,6 +114,33 @@ export const COMMANDS: readonly Command[] = [
         cwd: context.cwd,
         homeDir: context.homeDir,
         env: context.env,
+        stdout: context.stdout,
+        stderr: context.stderr,
+      }),
+  },
+  {
+    name: "rollback",
+    synopsis: "rollback [--undo] [--force] [--global]",
+    summary: "Undo (or redo with --undo) the last install",
+    flags: ["--undo", "--force", "--dry-run", "--global"],
+    usage: [
+      "Usage: cprof rollback [--undo] [--force] [--dry-run] [--global]",
+      "",
+      "Strictly undo the most recent install in this scope — restore merged files",
+      "from backup and move created files to a trash dir. With --undo, re-apply the",
+      "most recent rolled-back install instead. If any touched file changed since",
+      "install the whole operation aborts (use --force to override).",
+      "",
+      "Options:",
+      "  --undo      Re-apply the last rolled-back install",
+      "  --force     Proceed even if files changed since install",
+      "  --dry-run   Print the plan without changing anything",
+      "  --global    Act on the ~/.claude ledger instead of the project",
+    ].join("\n"),
+    run: (flags, context) =>
+      runRollback(flags, {
+        cwd: context.cwd,
+        homeDir: context.homeDir,
         stdout: context.stdout,
         stderr: context.stderr,
       }),
