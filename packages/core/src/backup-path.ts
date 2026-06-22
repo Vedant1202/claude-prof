@@ -20,8 +20,19 @@ export function backupPathFor(
     return join(backupRoot, rel);
   }
 
-  const mirrored = resolve(targetPath)
+  return join(backupRoot, "external", stripRoot(targetPath));
+}
+
+/**
+ * Mirror an absolute path under `root`, collision-free (distinct sources map to
+ * distinct destinations). Used to stash/restore files under a trash directory.
+ */
+export function mirrorAbsolutePath(root: string, targetPath: string): string {
+  return join(root, stripRoot(targetPath));
+}
+
+function stripRoot(targetPath: string): string {
+  return resolve(targetPath)
     .replace(/^[\\/]+/, "") // drop the leading separator(s)
     .replace(/:/g, ""); // drop the Windows drive colon
-  return join(backupRoot, "external", mirrored);
 }
