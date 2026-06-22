@@ -1,13 +1,9 @@
-import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, resolve } from "node:path";
 
-import {
-  createProfileGitignore,
-  createScanReport,
-  scanClaudeProfile,
-  validateProfile,
-} from "@cprof/core";
+import { scanClaudeProfile } from "@cprof/core";
+
+import { finalizeProfileWrite, parseCommonFlags } from "../command-utils.js";
 
 export interface InitCommandOptions {
   readonly cwd: string;
@@ -20,7 +16,8 @@ export async function runInit(
   flags: readonly string[],
   options: InitCommandOptions,
 ): Promise<number> {
-  const parsed = parseInitFlags(flags);
+  const { json, quiet, rest } = parseCommonFlags(flags);
+  const parsed = parseInitFlags(rest);
 
   if (parsed.valid === false) {
     options.stderr.write(`${parsed.error}\n`);
@@ -36,47 +33,19 @@ export async function runInit(
     mode: parsed.mode,
     includeGlobal: parsed.mode === "project" ? parsed.includeGlobal : false,
   });
-  const manifest = scan.manifest;
-  const validation = validateProfile(manifest);
 
-  if (!validation.valid) {
-    options.stderr.write(`${validation.errors.join("\n")}\n`);
-    return validation.exitCode;
-  }
-
-  if (!scan.leakCheck.ok) {
-    const leakedPaths = [
-      ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
-    ];
-    options.stderr.write(
-      `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
-    );
-    return 3;
-  }
-
-  await writeFile(
-    join(options.cwd, "claude-profile.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, ".gitignore"),
-    createProfileGitignore(),
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, "cprof-scan-report.txt"),
-    createScanReport(scan.report),
-    "utf8",
-  );
-
-  options.stdout.write(
-    `Wrote claude-profile.json (${manifest.profileScope}${
-      manifest.includesGlobal ? " + global" : ""
-    })\n`,
-  );
-
-  return 0;
+  return finalizeProfileWrite({
+    command: "init",
+    cwd: options.cwd,
+    scan,
+    json,
+    quiet,
+    successMessage: `Wrote claude-profile.json (${scan.manifest.profileScope}${
+      scan.manifest.includesGlobal ? " + global" : ""
+    })`,
+    stdout: options.stdout,
+    stderr: options.stderr,
+  });
 }
 
 type ParsedInitFlags =

@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 
 import { installProfile, type InstallScope } from "@cprof/core";
 
+import { emitJson, parseCommonFlags } from "../command-utils.js";
+
 export interface InstallCommandOptions {
   readonly cwd: string;
   readonly homeDir?: string;
@@ -23,7 +25,8 @@ export async function runInstall(
   flags: readonly string[],
   options: InstallCommandOptions,
 ): Promise<number> {
-  const parsed = parseInstallFlags(flags);
+  const { json, quiet, rest } = parseCommonFlags(flags);
+  const parsed = parseInstallFlags(rest);
 
   if (parsed.valid === false) {
     options.stderr.write(`${parsed.error}\n`);
@@ -41,10 +44,27 @@ export async function runInstall(
     installSource: parsed.profilePath,
   });
 
-  const output = result.ok ? options.stdout : options.stderr;
-  output.write(result.report);
+  if (json) {
+    emitJson(options.stdout, "install", result.ok, {
+      dryRun: result.dryRun,
+      writes: result.writes,
+      conflicts: result.conflicts,
+      skipped: result.skipped,
+      backups: result.backups,
+      missingSecrets: result.missingSecrets,
+      errors: result.errors,
+    });
+    return result.exitCode;
+  }
 
-  if (result.ok) {
+  if (!result.ok) {
+    // Failure report explains the error — always shown, even with --quiet.
+    options.stderr.write(result.report);
+    return result.exitCode;
+  }
+
+  if (!quiet) {
+    options.stdout.write(result.report);
     options.stdout.write(
       `${parsed.dryRun ? "Planned" : "Installed"} ${result.writes.length} writes\n`,
     );
