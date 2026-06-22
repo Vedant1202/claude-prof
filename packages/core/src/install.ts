@@ -1,8 +1,9 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import type { CprofProfile } from "@cprof/schema";
 
+import { backupPathFor } from "./backup-path.js";
 import { isNodeError } from "./fs-utils.js";
 import { createInstallPlan, resolveAllowedScopes } from "./install-plan.js";
 import { createInstallReport } from "./install-report.js";
@@ -334,11 +335,7 @@ async function backupConflicts(
   const backups: InstallWrite[] = [];
 
   for (const conflict of conflicts) {
-    const relativePath = relative(projectRoot, conflict.path);
-    const backupPath = join(
-      backupRoot,
-      relativePath.startsWith("..") ? basename(conflict.path) : relativePath,
-    );
+    const backupPath = backupPathFor(backupRoot, conflict.path, projectRoot);
     const contents = await readFile(conflict.path, "utf8");
     await mkdir(dirname(backupPath), { recursive: true });
     await writeFile(backupPath, contents, "utf8");
