@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
@@ -26,7 +27,7 @@ import type {
   PreparedWrite,
 } from "./install-types.js";
 import { checkGeneratedOutputForLeaks } from "./leak-check.js";
-import { recordInstalledProfile } from "./state.js";
+import { recordInstalledProfile, type WriteRecord } from "./state.js";
 import { validateProfile } from "./validate.js";
 
 export { createInstallReport } from "./install-report.js";
@@ -184,6 +185,9 @@ export async function installProfile(
       profileScope: context.profile.profileScope,
       includesGlobal: context.profile.includesGlobal,
       installedAt: (options.now ?? new Date()).toISOString(),
+      status: "applied",
+      backupDir: backupRoot,
+      writes: toWriteRecords(prepared, backups),
     });
   }
 
@@ -392,6 +396,26 @@ function toPublicWrite(write: PreparedWrite): InstallWrite {
     overriddenKeys:
       write.overriddenKeys.length > 0 ? write.overriddenKeys : undefined,
   };
+}
+
+/** Build the ledger's per-file provenance: action, post-install hash, and the
+ * pre-install backup path (for merged/overwritten files) so rollback can reverse it. */
+function toWriteRecords(
+  prepared: readonly PreparedWrite[],
+  backups: readonly InstallWrite[],
+): WriteRecord[] {
+  return prepared.map((write) => {
+    const backup = backups.find((entry) => entry.path === write.path);
+    const record: WriteRecord = {
+      path: write.path,
+      action: write.action,
+      hash: `sha256:${createHash("sha256").update(write.finalContents).digest("hex")}`,
+    };
+
+    return backup?.backupPath !== undefined
+      ? { ...record, backupPath: backup.backupPath }
+      : record;
+  });
 }
 
 function formatTimestamp(date: Date): string {
