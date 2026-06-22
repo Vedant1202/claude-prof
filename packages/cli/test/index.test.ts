@@ -33,6 +33,17 @@ describe("cprof cli", () => {
     expect(stdout.output).toBe(`${pkgVersion}\n`);
   });
 
+  it("treats --version after a command as that command's argument, not global", async () => {
+    const stdout = createWritable();
+    const stderr = createWritable();
+
+    await expect(
+      main(["scan", "--version"], { cwd: tempDir, stdout, stderr }),
+    ).resolves.toBe(2);
+
+    expect(stdout.output).not.toContain(pkgVersion);
+  });
+
   it("prints usage with --help and exits 0", async () => {
     const stdout = createWritable();
 

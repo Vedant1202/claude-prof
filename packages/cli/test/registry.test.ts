@@ -13,6 +13,7 @@ describe("command registry", () => {
       "scan",
       "profiles",
       "completion",
+      "help",
     ]);
   });
 

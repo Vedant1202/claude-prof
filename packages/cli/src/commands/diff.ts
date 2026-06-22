@@ -38,7 +38,12 @@ export async function runDiff(
   const diff = diffProfiles(left.value, right.value);
 
   if (json) {
-    emitJson(options.stdout, "diff", true, { ...diff });
+    // `ok` reports that the command succeeded; `equal` reports whether the two
+    // profiles actually match (the diff's success doesn't imply they're equal).
+    emitJson(options.stdout, "diff", true, {
+      equal: diff.entries.length === 0,
+      ...diff,
+    });
   } else {
     options.stdout.write(formatProfileDiff(diff));
   }

@@ -33,14 +33,19 @@ function isShell(value: string): value is Shell {
   return (SHELLS as readonly string[]).includes(value);
 }
 
-/** Command names that can follow `cprof`, including the help meta-command. */
+/** Command names that can follow `cprof`. */
 function commandNames(): readonly string[] {
-  return [...COMMANDS.map((command) => command.name), "help"];
+  return COMMANDS.map((command) => command.name);
 }
 
 function flagsFor(name: string): readonly string[] {
   const command = COMMANDS.find((entry) => entry.name === name);
   return command ? [...command.flags, ...COMMON_FLAGS] : [...COMMON_FLAGS];
+}
+
+/** Make a string safe to embed inside a single-quoted shell string. */
+export function singleQuoteEscape(value: string): string {
+  return value.replace(/'/g, "'\\''");
 }
 
 const generators: Record<Shell, () => string> = {
@@ -73,7 +78,7 @@ complete -F _cprof cprof
 
 function zshCompletion(): string {
   const describe = COMMANDS.map(
-    (command) => `    '${command.name}:${command.summary}'`,
+    (command) => `    '${command.name}:${singleQuoteEscape(command.summary)}'`,
   ).join("\n");
   const branches = COMMANDS.map(
     (command) =>
@@ -88,7 +93,6 @@ _cprof() {
   local -a commands
   commands=(
 ${describe}
-    'help:Show help for a command'
   )
   if (( CURRENT == 2 )); then
     _describe -t commands 'cprof command' commands
@@ -107,7 +111,9 @@ function fishCompletion(): string {
     "# cprof fish completion — cprof completion fish > ~/.config/fish/completions/cprof.fish";
   const commands = COMMANDS.map(
     (command) =>
-      `complete -c cprof -n __fish_use_subcommand -a ${command.name} -d '${command.summary}'`,
+      `complete -c cprof -n __fish_use_subcommand -a ${command.name} -d '${singleQuoteEscape(
+        command.summary,
+      )}'`,
   );
   const flagLines = COMMANDS.flatMap((command) =>
     flagsFor(command.name).map(

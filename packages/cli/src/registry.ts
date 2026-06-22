@@ -1,5 +1,6 @@
 import { runCompletion } from "./commands/completion.js";
 import { runDiff } from "./commands/diff.js";
+import { runHelp } from "./commands/help.js";
 import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
 import { runProfiles } from "./commands/profiles.js";
@@ -219,6 +220,22 @@ export const COMMANDS: readonly Command[] = [
     ].join("\n"),
     run: (flags, context) =>
       runCompletion(flags, {
+        stdout: context.stdout,
+        stderr: context.stderr,
+      }),
+  },
+  {
+    name: "help",
+    synopsis: "help [command]",
+    summary: "Show help for a command",
+    flags: [],
+    usage: [
+      "Usage: cprof help [command]",
+      "",
+      "Print the command overview, or the usage for a specific command.",
+    ].join("\n"),
+    run: (flags, context) =>
+      runHelp(flags, {
         stdout: context.stdout,
         stderr: context.stderr,
       }),
