@@ -95,11 +95,11 @@ export const COMMANDS: readonly Command[] = [
   {
     name: "install",
     synopsis:
-      "install <file> [--dry-run] [--force] [--global | --include-global]",
+      "install <file> [--dry-run] [--force] [--into <dir>] [--global | --include-global]",
     summary: "Apply a trusted profile to this machine (deep merge)",
-    flags: ["--dry-run", "--force", "--global", "--include-global"],
+    flags: ["--dry-run", "--force", "--into", "--global", "--include-global"],
     usage: [
-      "Usage: cprof install <file> [--dry-run] [--force] [--global | --include-global]",
+      "Usage: cprof install <file> [--dry-run] [--force] [--into <dir>] [--global | --include-global]",
       "",
       "Apply a trusted profile to this machine with a non-destructive deep merge.",
       "Existing files are backed up before they are replaced.",
@@ -107,6 +107,7 @@ export const COMMANDS: readonly Command[] = [
       "Options:",
       "  --dry-run          Print the write plan without changing anything",
       "  --force            Overwrite existing asset files (skills/commands/agents/…)",
+      "  --into <dir>       Apply into <dir> instead of the current project directory",
       "  --global           Apply to ~/.claude (user-level) instead of the project",
       "  --include-global   Apply both the project and global scopes",
     ].join("\n"),
