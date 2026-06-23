@@ -50,11 +50,11 @@ export const COMMON_FLAGS: readonly string[] = ["--json", "--quiet", "--help"];
 export const COMMANDS: readonly Command[] = [
   {
     name: "init",
-    synopsis: "init [--global | --include-global]",
+    synopsis: "init [--global | --include-global] [--out <dir>]",
     summary: "Snapshot the current setup into claude-profile.json",
-    flags: ["--global", "--include-global"],
+    flags: ["--global", "--include-global", "--out"],
     usage: [
-      "Usage: cprof init [--global | --include-global]",
+      "Usage: cprof init [--global | --include-global] [--out <dir>]",
       "",
       "Snapshot the current Claude Code setup into claude-profile.json (alongside a",
       "scan report and a .gitignore). Secrets are redacted to ${env:NAME} placeholders",
@@ -63,6 +63,7 @@ export const COMMANDS: readonly Command[] = [
       "Options:",
       "  --global           Snapshot ~/.claude (user-level) instead of the project",
       "  --include-global   Capture the project plus its global context in one file",
+      "  --out <dir>        Write the profile bundle to <dir> (created if missing)",
     ].join("\n"),
     run: (flags, context) =>
       runInit(flags, {

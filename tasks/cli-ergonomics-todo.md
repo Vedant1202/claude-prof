@@ -6,7 +6,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 1 — Target-path flags
 
-- [ ] T1 `init --out <dir>` — `finalizeProfileWrite` +`outDir` (mkdir, json path); init parser → token loop; thread to `scan.outputRoot`; registry; new `init.test.ts` (round-trip install from out-dir)
+- [x] T1 `init --out <dir>` — `finalizeProfileWrite` +`outDir` (mkdir, json path); init parser → token loop; thread to `scan.outputRoot`; registry; new `init.test.ts` (round-trip install from out-dir)
 - [ ] T3 `install --into <dir>` — install parser +`--into`; `installProfile.cwd`; registry; extend `install.test.ts` (independent of T1)
 - [ ] ⟂ Checkpoint A — both path flags end-to-end on temp dirs; defaults unchanged; flags in `--help`/completion; `--filter @cprof/cli test` + build green
 
