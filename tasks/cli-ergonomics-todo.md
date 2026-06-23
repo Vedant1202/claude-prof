@@ -12,7 +12,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 2 — Side-file opt-outs
 
-- [ ] T2 `--no-gitignore` / `--no-report` (init + refresh) — `finalizeProfileWrite` +`writeGitignore`/`writeReport`; init + refresh parsers; registry; tests incl. **planted-secret-still-exits-3** under `--no-report`
+- [x] T2 `--no-gitignore` / `--no-report` (init + refresh) — `finalizeProfileWrite` +`writeGitignore`/`writeReport`; init + refresh parsers; registry; tests incl. **gate-still-exits-3** under `--no-report` (deterministic: forced leakCheck.ok=false)
 - [ ] T4 Docs — README command table + `website/docs/reference/commands.md` (`--out` is a dir; `--no-report` ≠ disabling the gate)
 - [ ] ⟂ Checkpoint Final — `corepack pnpm verify` green; spec §7/§8; no `packages/core`|`packages/schema` diff; PR into `dev` (owner-run)
 

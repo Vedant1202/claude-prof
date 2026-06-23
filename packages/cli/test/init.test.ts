@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { validateProfile } from "@cprof/core";
+import { scanClaudeProfile, validateProfile } from "@cprof/core";
+import { finalizeProfileWrite } from "../src/command-utils.js";
 import { main } from "../src/index.js";
 import { createWritable } from "./helpers.js";
 
@@ -93,5 +94,104 @@ describe("cprof init --out", () => {
       await readFile(join(cwd, "claude-profile.json"), "utf8"),
     ) as Record<string, unknown>;
     expect(validateProfile(profile)).toMatchObject({ valid: true });
+  });
+});
+
+describe("cprof init side-file opt-outs", () => {
+  it("--no-gitignore omits the .gitignore but keeps the profile and report", async () => {
+    await expect(
+      main(["init", "--no-gitignore"], { cwd, homeDir }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(cwd, "claude-profile.json"), "utf8"),
+    ).resolves.toBeTruthy();
+    await expect(
+      readFile(join(cwd, "cprof-scan-report.txt"), "utf8"),
+    ).resolves.toBeTruthy();
+    await expect(
+      readFile(join(cwd, ".gitignore"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("--no-report omits the scan report but keeps the profile and .gitignore", async () => {
+    await expect(main(["init", "--no-report"], { cwd, homeDir })).resolves.toBe(
+      0,
+    );
+
+    await expect(
+      readFile(join(cwd, "claude-profile.json"), "utf8"),
+    ).resolves.toBeTruthy();
+    await expect(
+      readFile(join(cwd, ".gitignore"), "utf8"),
+    ).resolves.toBeTruthy();
+    await expect(
+      readFile(join(cwd, "cprof-scan-report.txt"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("both opt-outs leave only the profile", async () => {
+    await expect(
+      main(["init", "--no-gitignore", "--no-report"], { cwd, homeDir }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(cwd, "claude-profile.json"), "utf8"),
+    ).resolves.toBeTruthy();
+    await expect(
+      readFile(join(cwd, ".gitignore"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(join(cwd, "cprof-scan-report.txt"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("--no-report does not disable the secret leak gate", async () => {
+    // A real scan, with the leak-check forced to fail as if redaction missed a
+    // secret. The gate must refuse to write regardless of --no-report, which only
+    // governs the cosmetic report file — never the security check.
+    const scan = await scanClaudeProfile({
+      name: "project",
+      version: "1.0.0",
+      cwd,
+      homeDir,
+      outputRoot: cwd,
+      mode: "project",
+      includeGlobal: false,
+    });
+    const leaky = {
+      ...scan,
+      leakCheck: {
+        ok: false,
+        leaks: [
+          {
+            path: "claude-profile.json",
+            tokenIndex: 0,
+            reason: "high-entropy" as const,
+          },
+        ],
+      },
+    };
+    const stderr = createWritable();
+
+    const code = await finalizeProfileWrite({
+      command: "init",
+      cwd,
+      scan: leaky,
+      json: false,
+      quiet: true,
+      writeGitignore: false,
+      writeReport: false,
+      successMessage: "unused",
+      stdout: createWritable(),
+      stderr,
+    });
+
+    expect(code).toBe(3);
+    expect(stderr.output).toContain("refusing to write");
+    // Nothing is written — not even the profile.
+    await expect(
+      readFile(join(cwd, "claude-profile.json"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

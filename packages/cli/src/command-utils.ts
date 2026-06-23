@@ -62,6 +62,10 @@ export interface FinalizeProfileWriteInput {
   readonly cwd: string;
   /** Directory to write the profile bundle into. Defaults to `cwd`. */
   readonly outDir?: string;
+  /** Write the `.gitignore` helper alongside the profile. Defaults to true. */
+  readonly writeGitignore?: boolean;
+  /** Write the `cprof-scan-report.txt` helper. Defaults to true. */
+  readonly writeReport?: boolean;
   readonly scan: ScanClaudeProfileResult;
   readonly json: boolean;
   readonly quiet: boolean;
@@ -115,12 +119,20 @@ export async function finalizeProfileWrite(
     `${JSON.stringify(manifest, null, 2)}\n`,
     "utf8",
   );
-  await writeFile(join(outDir, ".gitignore"), createProfileGitignore(), "utf8");
-  await writeFile(
-    join(outDir, "cprof-scan-report.txt"),
-    createScanReport(scan.report),
-    "utf8",
-  );
+  if (input.writeGitignore !== false) {
+    await writeFile(
+      join(outDir, ".gitignore"),
+      createProfileGitignore(),
+      "utf8",
+    );
+  }
+  if (input.writeReport !== false) {
+    await writeFile(
+      join(outDir, "cprof-scan-report.txt"),
+      createScanReport(scan.report),
+      "utf8",
+    );
+  }
 
   if (json) {
     emitJson(stdout, command, true, {

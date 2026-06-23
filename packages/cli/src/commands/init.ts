@@ -46,6 +46,8 @@ export async function runInit(
     scan,
     json,
     quiet,
+    writeGitignore: parsed.writeGitignore,
+    writeReport: parsed.writeReport,
     successMessage: `Wrote claude-profile.json (${scan.manifest.profileScope}${
       scan.manifest.includesGlobal ? " + global" : ""
     })`,
@@ -60,12 +62,16 @@ type ParsedInitFlags =
       readonly mode: "project";
       readonly includeGlobal: boolean;
       readonly outDir?: string;
+      readonly writeGitignore: boolean;
+      readonly writeReport: boolean;
     }
   | {
       readonly valid: true;
       readonly mode: "global";
       readonly includeGlobal?: false;
       readonly outDir?: string;
+      readonly writeGitignore: boolean;
+      readonly writeReport: boolean;
     }
   | { readonly valid: false; readonly error: string };
 
@@ -73,6 +79,8 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
   let global = false;
   let includeGlobal = false;
   let outDir: string | undefined;
+  let writeGitignore = true;
+  let writeReport = true;
 
   for (let index = 0; index < flags.length; index += 1) {
     const flag = flags[index];
@@ -81,6 +89,10 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
       global = true;
     } else if (flag === "--include-global") {
       includeGlobal = true;
+    } else if (flag === "--no-gitignore") {
+      writeGitignore = false;
+    } else if (flag === "--no-report") {
+      writeReport = false;
     } else if (flag === "--out") {
       const value = flags[index + 1];
       if (value === undefined || value.startsWith("--")) {
@@ -101,10 +113,24 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
   }
 
   if (global) {
-    return { valid: true, mode: "global", includeGlobal: false, outDir };
+    return {
+      valid: true,
+      mode: "global",
+      includeGlobal: false,
+      outDir,
+      writeGitignore,
+      writeReport,
+    };
   }
 
-  return { valid: true, mode: "project", includeGlobal, outDir };
+  return {
+    valid: true,
+    mode: "project",
+    includeGlobal,
+    outDir,
+    writeGitignore,
+    writeReport,
+  };
 }
 
 function createProfileName(

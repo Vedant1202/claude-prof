@@ -52,9 +52,16 @@ export const COMMANDS: readonly Command[] = [
     name: "init",
     synopsis: "init [--global | --include-global] [--out <dir>]",
     summary: "Snapshot the current setup into claude-profile.json",
-    flags: ["--global", "--include-global", "--out"],
+    flags: [
+      "--global",
+      "--include-global",
+      "--out",
+      "--no-gitignore",
+      "--no-report",
+    ],
     usage: [
       "Usage: cprof init [--global | --include-global] [--out <dir>]",
+      "                  [--no-gitignore] [--no-report]",
       "",
       "Snapshot the current Claude Code setup into claude-profile.json (alongside a",
       "scan report and a .gitignore). Secrets are redacted to ${env:NAME} placeholders",
@@ -64,6 +71,8 @@ export const COMMANDS: readonly Command[] = [
       "  --global           Snapshot ~/.claude (user-level) instead of the project",
       "  --include-global   Capture the project plus its global context in one file",
       "  --out <dir>        Write the profile bundle to <dir> (created if missing)",
+      "  --no-gitignore     Do not write the .gitignore helper",
+      "  --no-report        Do not write the cprof-scan-report.txt helper",
     ].join("\n"),
     run: (flags, context) =>
       runInit(flags, {
@@ -75,14 +84,18 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     name: "refresh",
-    synopsis: "refresh",
+    synopsis: "refresh [--no-gitignore] [--no-report]",
     summary: "Rebuild the profile from its recorded source scope",
-    flags: [],
+    flags: ["--no-gitignore", "--no-report"],
     usage: [
-      "Usage: cprof refresh",
+      "Usage: cprof refresh [--no-gitignore] [--no-report]",
       "",
       "Rebuild claude-profile.json in place from the scope recorded in the existing",
       "profile. Re-scans, re-redacts, and re-validates like init.",
+      "",
+      "Options:",
+      "  --no-gitignore   Do not write the .gitignore helper",
+      "  --no-report      Do not write the cprof-scan-report.txt helper",
     ].join("\n"),
     run: (flags, context) =>
       runRefresh(flags, {
