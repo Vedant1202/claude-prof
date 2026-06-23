@@ -107,6 +107,7 @@ Existing `${VAR}` expansions are preserved, and the generated manifest is
 | `cprof init [--global \| --include-global]`                    | Snapshot the current setup into `claude-profile.json`           |
 | `cprof refresh`                                                | Rebuild the profile from its recorded source scope              |
 | `cprof install <file> [--dry-run] [--force] [--global \| ...]` | Apply a trusted profile (deep merge; backs up before overwrite) |
+| `cprof rollback [--undo] [--force] [--global]`                 | Strictly undo (or `--undo` to redo) the last install            |
 | `cprof validate <file>`                                        | Validate a profile against the schema                           |
 | `cprof diff <a.json> <b.json>`                                 | Compare two profiles semantically                               |
 | `cprof scan <file...>`                                         | Scan files for secrets — a standalone leak gate for CI          |

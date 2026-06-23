@@ -25,6 +25,10 @@ const PROFILE_GITIGNORE_LINES = [
   ".claude/sessions/",
   ".claude/transcripts/",
   ".claude/history.jsonl",
+  // cprof's own local install state — never commit these
+  ".cprof-backups/",
+  ".cprof-trash/",
+  ".cprof-state.json",
 ] as const;
 
 export function createProfileGitignore(): string {

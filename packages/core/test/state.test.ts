@@ -1,10 +1,11 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  findLatestInstall,
   loadInstalledProfileState,
   recordInstalledProfile,
 } from "../src/state.js";
@@ -24,9 +25,72 @@ describe("installed profile state", () => {
     await expect(
       loadInstalledProfileState(join(tempDir, ".cprof-state.json")),
     ).resolves.toEqual({
-      version: 1,
+      version: 2,
       installs: [],
     });
+  });
+
+  it("upgrades a v1 ledger to v2 with default status and writes", async () => {
+    const path = join(tempDir, ".cprof-state.json");
+    await mkdir(tempDir, { recursive: true });
+    await writeFile(
+      path,
+      JSON.stringify({
+        version: 1,
+        installs: [
+          {
+            name: "Legacy",
+            version: "1.0.0",
+            source: "legacy.json",
+            target: "project",
+            profileScope: "project",
+            includesGlobal: false,
+            installedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      }),
+      "utf8",
+    );
+
+    const state = await loadInstalledProfileState(path);
+
+    expect(state.version).toBe(2);
+    expect(state.installs[0]).toMatchObject({
+      name: "Legacy",
+      status: "applied",
+      writes: [],
+    });
+  });
+
+  it("findLatestInstall returns the most recent entry, filtered by status", async () => {
+    const path = join(tempDir, ".cprof-state.json");
+    await recordInstalledProfile(path, {
+      name: "Older",
+      version: "1.0.0",
+      source: "a.json",
+      target: "project",
+      profileScope: "project",
+      includesGlobal: false,
+      installedAt: "2026-05-01T00:00:00.000Z",
+      status: "rolled-back",
+      writes: [],
+    });
+    await recordInstalledProfile(path, {
+      name: "Newer",
+      version: "1.0.0",
+      source: "b.json",
+      target: "project",
+      profileScope: "project",
+      includesGlobal: false,
+      installedAt: "2026-05-02T00:00:00.000Z",
+      status: "applied",
+      writes: [],
+    });
+
+    const state = await loadInstalledProfileState(path);
+    expect(findLatestInstall(state)?.name).toBe("Newer");
+    expect(findLatestInstall(state, "applied")?.name).toBe("Newer");
+    expect(findLatestInstall(state, "rolled-back")?.name).toBe("Older");
   });
 
   it("records installed profiles and upserts by source plus target", async () => {

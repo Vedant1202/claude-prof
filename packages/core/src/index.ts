@@ -105,8 +105,19 @@ export {
   type InstallWrite,
 } from "./install.js";
 export {
+  findLatestInstall,
   loadInstalledProfileState,
   recordInstalledProfile,
+  saveInstalledProfileState,
   type InstalledProfileRecord,
   type InstalledProfileState,
+  type InstallStatus,
+  type WriteRecord,
 } from "./state.js";
+export {
+  rollbackLastInstall,
+  type RollbackMode,
+  type RollbackOptions,
+  type RollbackOutcome,
+  type RollbackResult,
+} from "./rollback.js";
