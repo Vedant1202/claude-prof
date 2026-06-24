@@ -98,6 +98,8 @@ path overwrites nothing and writes no backups. A template name that doesn't reso
 exits `2` and lists the available templates — create one with `cprof init --template
 <name>`. Exit codes: `0` scaffolded · `1` usage or refused-overwrite · `2` not found.
 
+See the [Scaffold a new project](../guides/scaffold.md) guide for the template workflow.
+
 ## `cprof rollback`
 
 Strictly undo the most recent install in a scope — a transaction, not a partial
