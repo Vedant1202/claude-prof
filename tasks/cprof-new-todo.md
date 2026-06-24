@@ -7,8 +7,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 ## Phase 1 — The command
 
 - [x] T1 `cprof new <profile> [dir]` + registry — `parseCommonFlags`; positionals + `--force`; dry-run pre-flight (`existing = writes.action !== "created"`); refuse (exit 1) or `installProfile` real; scaffold output / `--json`; new `new.test.ts` (scaffold cwd/dir, refuse, `--force` overwrite+backup, profile-not-found)
-- [ ] T2 Reversibility — end-to-end test: `new --force` overwrites → `cprof rollback` restores the original + trashes created (no code change expected; fix `new.ts` if a gap shows)
-- [ ] ⟂ Checkpoint A — scaffolds / refuses / `--force` reversible; flags in `--help`/completion; cli test + build green; no `core`|`schema` diff
+- [x] T2 Reversibility — end-to-end test: `new --force` overwrites → `cprof rollback` restores the original (passed with no code change — the property fell out of reusing install's backup + ledger)
+- [x] ⟂ Checkpoint A — scaffolds / refuses / `--force` reversible; flags in `--help`/completion; cli test (79) + build green; zero `core`|`schema` diff
 
 ## Phase 2 — Docs
 

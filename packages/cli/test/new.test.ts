@@ -154,4 +154,30 @@ describe("cprof new", () => {
 
     expect(stderr.output).toMatch(/not found/i);
   });
+
+  it("a forced overwrite is reversible via cprof rollback", async () => {
+    await writeAsset("commands/deploy.md", "New\n");
+    await writeProfile(projectProfile());
+    const dest = join(tempDir, "occupied");
+    await mkdir(join(dest, ".claude", "commands"), { recursive: true });
+    await writeFile(
+      join(dest, ".claude", "commands", "deploy.md"),
+      "Old\n",
+      "utf8",
+    );
+
+    // Scaffold over the existing file with --force (keeps a backup).
+    await expect(
+      main(["new", profile(), dest, "--force"], { cwd: tempDir, homeDir }),
+    ).resolves.toBe(0);
+    await expect(
+      readFile(join(dest, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("New\n");
+
+    // rollback (run in the scaffolded project) restores the original from backup.
+    await expect(main(["rollback"], { cwd: dest, homeDir })).resolves.toBe(0);
+    await expect(
+      readFile(join(dest, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("Old\n");
+  });
 });
