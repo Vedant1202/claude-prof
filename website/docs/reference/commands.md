@@ -123,6 +123,8 @@ operation aborts and names the offenders — `--force` overrides. It is strictly
 single-level (the last install only) and never per-file. Exit codes: `0` done ·
 `1` usage · `2` nothing to roll back · `3` aborted (a file changed; use `--force`).
 
+See the [Undo an install](../guides/rollback.md) guide for the rollback/`--undo` workflow.
+
 ## `cprof validate`
 
 Validate a profile against the schema.
