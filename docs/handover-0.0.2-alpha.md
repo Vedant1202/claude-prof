@@ -33,16 +33,16 @@ The version is bumped to `0.0.2-alpha.0` on `dev` and promoted to `main` via the
 
 All merged into `dev` via their own PRs, then promoted to `main` as one release:
 
-| Area                  | What                                                                            | PR        |
-| --------------------- | ------------------------------------------------------------------------------- | --------- |
-| CLI standards         | Standalone `cprof scan`, shell `completion`, per-command help, `--json`, `--quiet` | #9, #10   |
-| Reversible installs   | `cprof rollback [--undo]` + install **ledger v2**                               | #11       |
-| Output redirection    | `init --out <dir>`, `install --into <dir>`, `init/refresh --no-gitignore`/`--no-report` | #12       |
-| Scaffolding           | `cprof new <profile> [dir]` — clean-copy a project from a profile               | #13       |
-| Named templates       | `cprof new <name>` / `--list` + `init --template <name>` producer               | #14       |
-| Live drift            | `cprof diff <profile>` — re-scan the machine and diff against a saved profile   | #15       |
-| Docs + community      | Docusaurus Mermaid, four task guides, community-health files                    | #16       |
-| Fix                   | `.gitattributes` forces LF — closes the 0.0.1 Windows-CI `prettier --check` gap | —         |
+| Area                | What                                                                                    | PR      |
+| ------------------- | --------------------------------------------------------------------------------------- | ------- |
+| CLI standards       | Standalone `cprof scan`, shell `completion`, per-command help, `--json`, `--quiet`      | #9, #10 |
+| Reversible installs | `cprof rollback [--undo]` + install **ledger v2**                                       | #11     |
+| Output redirection  | `init --out <dir>`, `install --into <dir>`, `init/refresh --no-gitignore`/`--no-report` | #12     |
+| Scaffolding         | `cprof new <profile> [dir]` — clean-copy a project from a profile                       | #13     |
+| Named templates     | `cprof new <name>` / `--list` + `init --template <name>` producer                       | #14     |
+| Live drift          | `cprof diff <profile>` — re-scan the machine and diff against a saved profile           | #15     |
+| Docs + community    | Docusaurus Mermaid, four task guides, community-health files                            | #16     |
+| Fix                 | `.gitattributes` forces LF — closes the 0.0.1 Windows-CI `prettier --check` gap         | —       |
 
 Detail worth carrying forward:
 
@@ -77,19 +77,19 @@ Detail worth carrying forward:
 Eleven commands. Global flags: `-h`/`--help`, `-v`/`--version`. Per-command `--help`,
 `--json`, and `--quiet`/`-q` are available throughout.
 
-| Command                                                       | What it does                                                            |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `cprof init [--global \| --include-global] [--out <dir>] [--template <name>] [--no-gitignore] [--no-report]` | Snapshot the current setup into a profile bundle                        |
-| `cprof refresh [--no-gitignore] [--no-report]`                | Rebuild the profile from its recorded source scope                      |
-| `cprof install <file> [--dry-run] [--force] [--into <dir>] [--global \| --include-global]` | Apply a trusted profile (deep merge; backs up first; ledger-recorded)   |
-| `cprof new <profile\|name> [dir] [--force]` · `cprof new --list` | Scaffold a project from a profile or named template                     |
-| `cprof rollback [--undo] [--force] [--global]`                | Undo (or redo with `--undo`) the last install                           |
-| `cprof validate <file>`                                       | Validate a profile against the schema                                   |
-| `cprof diff <profile>` · `cprof diff <a.json> <b.json>`       | Drift vs the live machine, or compare two profile files                 |
-| `cprof scan <file...>`                                        | Standalone secret leak gate (the install/init gate, exposed)            |
-| `cprof profiles list`                                         | List profiles recorded by local installs                                |
-| `cprof completion <bash\|zsh\|fish>`                          | Print a shell completion script                                         |
-| `cprof help [command]`                                        | Show help for a command                                                 |
+| Command                                                                                                      | What it does                                                          |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `cprof init [--global \| --include-global] [--out <dir>] [--template <name>] [--no-gitignore] [--no-report]` | Snapshot the current setup into a profile bundle                      |
+| `cprof refresh [--no-gitignore] [--no-report]`                                                               | Rebuild the profile from its recorded source scope                    |
+| `cprof install <file> [--dry-run] [--force] [--into <dir>] [--global \| --include-global]`                   | Apply a trusted profile (deep merge; backs up first; ledger-recorded) |
+| `cprof new <profile\|name> [dir] [--force]` · `cprof new --list`                                             | Scaffold a project from a profile or named template                   |
+| `cprof rollback [--undo] [--force] [--global]`                                                               | Undo (or redo with `--undo`) the last install                         |
+| `cprof validate <file>`                                                                                      | Validate a profile against the schema                                 |
+| `cprof diff <profile>` · `cprof diff <a.json> <b.json>`                                                      | Drift vs the live machine, or compare two profile files               |
+| `cprof scan <file...>`                                                                                       | Standalone secret leak gate (the install/init gate, exposed)          |
+| `cprof profiles list`                                                                                        | List profiles recorded by local installs                              |
+| `cprof completion <bash\|zsh\|fish>`                                                                         | Print a shell completion script                                       |
+| `cprof help [command]`                                                                                       | Show help for a command                                               |
 
 Exit codes: `0` ok · `1` usage/flag error · `2` file not found · `3` redaction left a
 secret (nothing written).
@@ -122,9 +122,10 @@ in §10.
 ## 5. Direction & history — the "why"
 
 **The local-first wedge holds** (decision of 2026-06-20, see 0.0.1 handover §5): snapshot
-+ redact + diff + migrate, fully offline, no remote/registry/policy/cloud. Anthropic's
-export/import-profile request (#44659) remains closed "not planned", so the wedge is still
-durable and unserved.
+
+- redact + diff + migrate, fully offline, no remote/registry/policy/cloud. Anthropic's
+  export/import-profile request (#44659) remains closed "not planned", so the wedge is still
+  durable and unserved.
 
 **0.0.2-alpha in one line:** it spends the release closing _ergonomic_ and _safety_ gaps
 rather than expanding scope — per-command help and completions (table stakes), a
