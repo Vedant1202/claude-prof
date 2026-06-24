@@ -6,8 +6,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 1 — The command
 
-- [ ] T1 `cprof diff <profile>` live mode — branch on positional count; 1 ⇒ `readProfileFile` + `scanClaudeProfile` (refresh-style, temp `outputRoot`, `rm` in `finally`) + `diffProfiles(profile, live)` (drift); add `homeDir` to `DiffCommandOptions` + registry `diff` row; `diff.test.ts` (no-drift equal, drift entry, 2-arg regression, not-found, clean cwd)
-- [ ] ⟂ Checkpoint A — live diff (no-drift + drift); two-arg unchanged; new form in help/completion; cli test + build green; no `core`|`schema` diff
+- [x] T1 `cprof diff <profile>` live mode — branch on positional count; 1 ⇒ `readProfileFile` + `scanClaudeProfile` (refresh-style, temp `outputRoot`, `rm` in `finally`) + `diffProfiles(profile, live)` (drift); add `homeDir` to `DiffCommandOptions` + registry `diff` row; `diff.test.ts` (no-drift equal, drift entry, 2-arg regression, not-found, clean cwd)
+- [x] ⟂ Checkpoint A — live diff (no-drift + drift); two-arg unchanged; new form in help/completion; cli test (104) + build green; no `core`|`schema` diff
 
 ## Phase 2 — Docs
 

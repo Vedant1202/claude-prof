@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -101,6 +101,92 @@ describe("cprof diff", () => {
       ok: true,
       equal: true,
     });
+  });
+
+  it("reports no drift when the live machine matches the profile", async () => {
+    const project = join(tempDir, "project");
+    const homeDir = join(tempDir, "home");
+    const save = join(tempDir, "saved");
+    await mkdir(join(project, ".claude", "commands"), { recursive: true });
+    await mkdir(homeDir, { recursive: true });
+    await writeFile(
+      join(project, ".claude", "commands", "deploy.md"),
+      "Deploy\n",
+      "utf8",
+    );
+
+    // Save a profile of the project (bundle goes to `save`, not the project).
+    await expect(
+      main(["init", "--out", save], { cwd: project, homeDir }),
+    ).resolves.toBe(0);
+
+    const stdout = createWritable();
+    await expect(
+      main(["diff", join(save, "claude-profile.json")], {
+        cwd: project,
+        homeDir,
+        stdout,
+      }),
+    ).resolves.toBe(0);
+
+    expect(stdout.output).toBe("No differences.\n");
+    // The live scan never writes into the project.
+    await expect(
+      readFile(join(project, "claude-profile.json"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("shows drift after the machine changes", async () => {
+    const project = join(tempDir, "project");
+    const homeDir = join(tempDir, "home");
+    const save = join(tempDir, "saved");
+    await mkdir(join(project, ".claude", "commands"), { recursive: true });
+    await mkdir(homeDir, { recursive: true });
+    await writeFile(
+      join(project, ".claude", "commands", "deploy.md"),
+      "Deploy\n",
+      "utf8",
+    );
+    await expect(
+      main(["init", "--out", save], { cwd: project, homeDir }),
+    ).resolves.toBe(0);
+
+    // Change the machine: add a new command.
+    await writeFile(
+      join(project, ".claude", "commands", "release.md"),
+      "Release\n",
+      "utf8",
+    );
+
+    const stdout = createWritable();
+    await expect(
+      main(["diff", "--json", join(save, "claude-profile.json")], {
+        cwd: project,
+        homeDir,
+        stdout,
+      }),
+    ).resolves.toBe(0);
+
+    const result = JSON.parse(stdout.output) as {
+      equal: boolean;
+      entries: unknown;
+    };
+    expect(result).toMatchObject({ command: "diff", ok: true, equal: false });
+    expect(JSON.stringify(result.entries)).toMatch(/release/);
+  });
+
+  it("exits 2 when the single profile argument is missing", async () => {
+    const stderr = createWritable();
+
+    await expect(
+      main(["diff", join(tempDir, "nope.json")], {
+        cwd: tempDir,
+        homeDir: tempDir,
+        stderr,
+      }),
+    ).resolves.toBe(2);
+
+    expect(stderr.output).toMatch(/not found/i);
   });
 });
 

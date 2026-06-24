@@ -1,12 +1,24 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
-import { diffProfiles, formatProfileDiff } from "@cprof/core";
+import {
+  diffProfiles,
+  formatProfileDiff,
+  scanClaudeProfile,
+  type ProfileDiff,
+} from "@cprof/core";
 
-import { emitJson, isNodeError, parseCommonFlags } from "../command-utils.js";
+import {
+  emitJson,
+  isNodeError,
+  parseCommonFlags,
+  readProfileFile,
+} from "../command-utils.js";
 
 export interface DiffCommandOptions {
   readonly cwd: string;
+  readonly homeDir?: string;
   readonly stdout: Pick<NodeJS.WriteStream, "write">;
   readonly stderr: Pick<NodeJS.WriteStream, "write">;
 }
@@ -17,8 +29,16 @@ export async function runDiff(
 ): Promise<number> {
   const { json, rest } = parseCommonFlags(flags);
 
+  // One positional → diff the saved profile against a fresh scan of the live
+  // machine (drift). Two → compare two profile files (the original behavior).
+  if (rest.length === 1) {
+    return runLiveDiff(rest[0]!, json, options);
+  }
+
   if (rest.length !== 2) {
-    options.stderr.write("usage: cprof diff [--json] <a.json> <b.json>\n");
+    options.stderr.write(
+      "usage: cprof diff [--json] <profile> | <a.json> <b.json>\n",
+    );
     return 1;
   }
 
@@ -35,8 +55,59 @@ export async function runDiff(
     return reportReadError(right, json, options);
   }
 
-  const diff = diffProfiles(left.value, right.value);
+  return emitDiff(diffProfiles(left.value, right.value), json, options);
+}
 
+/**
+ * `cprof diff <profile>`: scan the current machine using the profile's own
+ * recorded metadata + scope (like `refresh`, so there is no name/version noise),
+ * then diff the saved profile against that live snapshot — drift, profile → live.
+ * The scan writes its bundle to a throwaway temp dir, removed afterwards.
+ */
+async function runLiveDiff(
+  profilePath: string,
+  json: boolean,
+  options: DiffCommandOptions,
+): Promise<number> {
+  const existing = await readProfileFile(resolve(options.cwd, profilePath));
+
+  if (!existing.ok) {
+    if (json) {
+      emitJson(options.stdout, "diff", false, { errors: existing.errors });
+    } else {
+      options.stderr.write(`${existing.errors.join("\n")}\n`);
+    }
+    return existing.exitCode;
+  }
+
+  const profile = existing.profile;
+  const outputRoot = await mkdtemp(join(tmpdir(), "cprof-live-"));
+
+  try {
+    const scan = await scanClaudeProfile({
+      name: profile.name,
+      version: profile.version,
+      description: profile.description,
+      claudeCode: profile.claudeCode,
+      cwd: options.cwd,
+      homeDir: options.homeDir ?? homedir(),
+      outputRoot,
+      mode: profile.profileScope,
+      includeGlobal:
+        profile.profileScope === "project" ? profile.includesGlobal : false,
+    });
+
+    return emitDiff(diffProfiles(profile, scan.manifest), json, options);
+  } finally {
+    await rm(outputRoot, { force: true, recursive: true });
+  }
+}
+
+function emitDiff(
+  diff: ProfileDiff,
+  json: boolean,
+  options: DiffCommandOptions,
+): number {
   if (json) {
     // `ok` reports that the command succeeded; `equal` reports whether the two
     // profiles actually match (the diff's success doesn't imply they're equal).
