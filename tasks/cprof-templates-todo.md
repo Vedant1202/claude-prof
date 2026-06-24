@@ -6,8 +6,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 1 — Consumer
 
-- [ ] T1 `new <name>` resolution + `--list` — resolver (path vs `homeDir/.cprof/templates/<name>/claude-profile.json`); not-found (exit 2) lists templates; `--list` mode; `parseNewFlags` + registry `new` row; `new.test.ts` (by-name, by-path regression, not-found, `--list`)
-- [ ] ⟂ Checkpoint A — `new` resolves by name + path; `--list` works; cli test + build green; no `core`|`schema` diff
+- [x] T1 `new <name>` resolution + `--list` — resolver (path vs `homeDir/.cprof/templates/<name>/claude-profile.json`); not-found (exit 2) lists templates; `--list` mode; `parseNewFlags` + registry `new` row; `new.test.ts` (by-name, by-path regression, not-found, `--list`)
+- [x] ⟂ Checkpoint A — `new` resolves by name + path; `--list` works; cli test (97) + build green; no `core`|`schema` diff
 
 ## Phase 2 — Producer
 
