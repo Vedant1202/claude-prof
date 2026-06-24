@@ -134,15 +134,24 @@ envelope. Exit codes: `0` valid · `1` schema/JSON error · `2` file not found.
 
 ## `cprof diff`
 
-Compare two profiles semantically — key order is ignored, and secret-looking
-changed values are redacted in the output.
+Compare profiles semantically — key order is ignored, and secret-looking changed
+values are redacted in the output.
 
 ```bash
+cprof diff [--json] <profile>
 cprof diff [--json] <a.json> <b.json>
 ```
 
-`--json` emits the structured diff under the `{ "command": "diff", "ok", … }`
-envelope; otherwise it prints formatted text.
+- **One argument** — diff `<profile>` against a fresh scan of the **current
+  machine** (its drift: `profile → live`). The machine is re-scanned using the
+  profile's own scope and metadata, so only real changes show — `+` is something
+  added on the machine since you saved, `-` something removed. (`install --dry-run`
+  covers the inverse: what applying the profile would change.)
+- **Two arguments** — compare two profile files.
+
+Drift is **not** an error: exit `0` either way (`--json` reports `equal`). `--json`
+emits the structured diff under the `{ "command": "diff", "ok", … }` envelope;
+otherwise it prints formatted text. Exit `2` if the profile is missing.
 
 ## `cprof scan`
 

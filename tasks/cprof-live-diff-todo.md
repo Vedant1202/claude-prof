@@ -11,7 +11,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 2 — Docs
 
-- [ ] T2 Docs — README command table (note `diff <profile>` ⇒ vs live machine) + `website/docs/reference/commands.md` `diff` section (both forms, drift framing, drift = exit 0)
+- [x] T2 Docs — README command table (note `diff <profile>` ⇒ vs live machine) + `website/docs/reference/commands.md` `diff` section (both forms, drift framing, drift = exit 0)
 - [ ] ⟂ Checkpoint Final — `corepack pnpm verify` green; spec §7/§8; zero `core`|`schema` diff; PR into `dev` (owner-run)
 
 ## Notes / prerequisites

@@ -110,7 +110,7 @@ Existing `${VAR}` expansions are preserved, and the generated manifest is
 | `cprof new <profile\|name> [dir] [--force]`                   | Scaffold a project from a profile or named template             |
 | `cprof rollback [--undo] [--force] [--global]`                | Strictly undo (or `--undo` to redo) the last install            |
 | `cprof validate <file>`                                       | Validate a profile against the schema                           |
-| `cprof diff <a.json> <b.json>`                                | Compare two profiles semantically                               |
+| `cprof diff <profile> \| <a.json> <b.json>`                   | Diff a profile vs the live machine, or two profiles             |
 | `cprof scan <file...>`                                        | Scan files for secrets — a standalone leak gate for CI          |
 | `cprof profiles list`                                         | List profiles recorded by local installs                        |
 | `cprof completion <bash\|zsh\|fish>`                          | Print a shell completion script                                 |

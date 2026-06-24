@@ -43,7 +43,7 @@ Order: **T1 → T2** (single thread, off `dev`).
 - `readProfileFile` (command-utils) reads + schema-validates a profile → typed `CprofProfile`
   (exit 2 not-found / 1 invalid) — reuse it for the saved profile in live mode.
 - `scanClaudeProfile({ name, version, description, claudeCode, cwd, homeDir, outputRoot, mode,
-  includeGlobal })` → `{ manifest, … }`; `refresh.ts` shows the exact call shape to copy.
+includeGlobal })` → `{ manifest, … }`; `refresh.ts` shows the exact call shape to copy.
 - `cli/src/registry.ts` `diff` row's `run` passes `cwd`/`stdout`/`stderr` only — add `homeDir`.
 - Test harness: `main(argv, { cwd, homeDir })`; `diff.test.ts` + `install.test.ts`/`new.test.ts`
   have `writeAsset`/`buildManifest` patterns to copy.
@@ -100,12 +100,12 @@ both forms, drift framing, "not an error" exit 0).
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Scan non-determinism → phantom drift | Med | Refresh-style metadata + same scope; `source`/`hash` position-independent; the "no drift" test is the guard. |
-| Temp-dir leak / writing into the project | Low | `mkdtemp` under OS temp + `rm` in `finally`; a test asserts a clean cwd. |
-| `diff` lacked `homeDir` | Low | Add to `DiffCommandOptions` + thread from the registry. |
-| Scope creep into core | Low | None expected; Checkpoint Final asserts zero core/schema diff. |
+| Risk                                     | Impact | Mitigation                                                                                                   |
+| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| Scan non-determinism → phantom drift     | Med    | Refresh-style metadata + same scope; `source`/`hash` position-independent; the "no drift" test is the guard. |
+| Temp-dir leak / writing into the project | Low    | `mkdtemp` under OS temp + `rm` in `finally`; a test asserts a clean cwd.                                     |
+| `diff` lacked `homeDir`                  | Low    | Add to `DiffCommandOptions` + thread from the registry.                                                      |
+| Scope creep into core                    | Low    | None expected; Checkpoint Final asserts zero core/schema diff.                                               |
 
 ## Open questions
 
