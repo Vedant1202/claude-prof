@@ -214,13 +214,16 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     name: "diff",
-    synopsis: "diff <a.json> <b.json>",
-    summary: "Compare two profiles semantically",
+    synopsis: "diff <profile> | diff <a.json> <b.json>",
+    summary: "Compare a profile to the live machine, or two profiles",
     flags: [],
     usage: [
-      "Usage: cprof diff [--json] <a.json> <b.json>",
+      "Usage: cprof diff [--json] <profile>",
+      "       cprof diff [--json] <a.json> <b.json>",
       "",
-      "Compare two profiles semantically (file vs file).",
+      "With one argument, diff the profile against a fresh scan of the current",
+      "machine (its drift: profile -> live). With two, compare two profile files.",
+      "Drift is not an error — exit 0 either way (--json reports `equal`).",
       "",
       "Options:",
       "  --json   Emit the diff as JSON",
@@ -228,6 +231,7 @@ export const COMMANDS: readonly Command[] = [
     run: (flags, context) =>
       runDiff(flags, {
         cwd: context.cwd,
+        homeDir: context.homeDir,
         stdout: context.stdout,
         stderr: context.stderr,
       }),
