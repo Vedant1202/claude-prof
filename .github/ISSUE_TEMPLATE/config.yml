@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://vedant1202.github.io/claude-prof/
+    about: Guides, the command reference, and what redaction does and doesn't catch.
+  - name: Report a security vulnerability
+    url: https://github.com/Vedant1202/claude-prof/security/advisories/new
+    about: Report privately — please do not open a public issue for vulnerabilities.

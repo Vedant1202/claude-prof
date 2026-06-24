@@ -68,4 +68,8 @@ catch.
 
 - [What's in a profile](./concepts/profiles.md) — the anatomy of a `claude-profile.json`.
 - [Migrate to another machine](./guides/migrate.md) — carry your setup and apply it elsewhere.
+- [Scaffold a new project](./guides/scaffold.md) — reuse a setup as a named template with `cprof new`.
+- [Undo an install](./guides/rollback.md) — reverse the last `install` with `cprof rollback`.
+- [Track drift](./guides/drift.md) — see how your live setup differs from a saved profile.
+- [Output locations & helper files](./guides/output-locations.md) — control `--out` / `--into` / `--no-*`.
 - [Commands](./reference/commands.md) — every command and flag.

@@ -38,6 +38,9 @@ Writes `claude-profile.json`, `cprof-scan-report.txt`, and a `.gitignore` into t
 output directory (the current directory by default, or `--out`). Exit codes: `0`
 success · `1` bad flags · `3` redaction left a secret (nothing is written).
 
+See [Output locations & helper files](../guides/output-locations.md) for `--out` /
+`--template` / `--no-*`.
+
 ## `cprof refresh`
 
 Rebuild the profile in place from the scope it recorded. Preserves your
@@ -98,6 +101,8 @@ path overwrites nothing and writes no backups. A template name that doesn't reso
 exits `2` and lists the available templates — create one with `cprof init --template
 <name>`. Exit codes: `0` scaffolded · `1` usage or refused-overwrite · `2` not found.
 
+See the [Scaffold a new project](../guides/scaffold.md) guide for the template workflow.
+
 ## `cprof rollback`
 
 Strictly undo the most recent install in a scope — a transaction, not a partial
@@ -120,6 +125,8 @@ the state it should be in. If **any** file changed since install, the whole
 operation aborts and names the offenders — `--force` overrides. It is strictly
 single-level (the last install only) and never per-file. Exit codes: `0` done ·
 `1` usage · `2` nothing to roll back · `3` aborted (a file changed; use `--force`).
+
+See the [Undo an install](../guides/rollback.md) guide for the rollback/`--undo` workflow.
 
 ## `cprof validate`
 
@@ -152,6 +159,8 @@ cprof diff [--json] <a.json> <b.json>
 Drift is **not** an error: exit `0` either way (`--json` reports `equal`). `--json`
 emits the structured diff under the `{ "command": "diff", "ok", … }` envelope;
 otherwise it prints formatted text. Exit `2` if the profile is missing.
+
+See the [Track drift](../guides/drift.md) guide for using live diff to spot drift.
 
 ## `cprof scan`
 

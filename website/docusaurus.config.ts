@@ -26,6 +26,7 @@ const config: Config = {
   // and generics renders literally; `.mdx` files still get full MDX.
   markdown: {
     format: "detect",
+    mermaid: true,
     hooks: {
       // v4 location for the broken-markdown-link policy (future.v4 is on).
       onBrokenMarkdownLinks: "throw",
@@ -72,6 +73,7 @@ const config: Config = {
       "@easyops-cn/docusaurus-search-local",
       { hashed: true, indexBlog: false, language: ["en"] },
     ],
+    "@docusaurus/theme-mermaid",
   ],
 
   themeConfig: {
