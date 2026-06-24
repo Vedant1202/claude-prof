@@ -18,7 +18,7 @@ cprof is alpha. An unknown command prints to stderr and exits `1`.
 Snapshot the current setup into `claude-profile.json`.
 
 ```bash
-cprof init [--global | --include-global] [--out <dir>] [--no-gitignore] [--no-report]
+cprof init [--global | --include-global] [--out <dir> | --template <name>] [--no-gitignore] [--no-report]
 ```
 
 - _(no flag)_ — snapshot the current **project**.
@@ -27,6 +27,9 @@ cprof init [--global | --include-global] [--out <dir>] [--no-gitignore] [--no-re
   separate in `sources`.
 - `--out <dir>` — write the profile bundle into `<dir>` (created if missing)
   instead of the current directory; relative `source` paths keep it portable.
+- `--template <name>` — save the setup as a named template under
+  `~/.cprof/templates/<name>/` (shorthand for `--out` into that dir; mutually
+  exclusive with `--out`). Templates are created only when you ask.
 - `--no-gitignore` / `--no-report` — skip writing the `.gitignore` / the
   `cprof-scan-report.txt` helper. Neither affects the secret leak-check, which
   always runs before any write.
@@ -73,22 +76,27 @@ code `1` on usage errors.
 
 ## `cprof new`
 
-Scaffold a fresh project from a profile — a clean, one-shot copy.
+Scaffold a fresh project from a profile or a named template — a clean, one-shot copy.
 
 ```bash
-cprof new <profile> [dir] [--force]
+cprof new <profile|name> [dir] [--force]
+cprof new --list
 ```
 
-- `<profile>` — a local `claude-profile.json` to scaffold from.
+- `<profile|name>` — either a path to a `claude-profile.json`, or the name of a
+  template under `~/.cprof/templates/`. A bare token (no separator, no `.json`) is
+  resolved as a template name; anything path-like is treated as a path.
 - `[dir]` — where to scaffold; **defaults to the current directory**, created if needed.
 - `--force` — overwrite files that already exist.
+- `--list` — list the named templates under `~/.cprof/templates/`.
 
 Applies the profile's **project-scope** content into `[dir]`. Unlike `install` (which
 merges into an existing project), `new` **refuses to touch anything that already
 exists** and exits `1`, listing the collisions — pass `--force` to overwrite. A forced
 overwrite still keeps a backup, so `cprof rollback` can reverse a scaffold; the clean
-path overwrites nothing and writes no backups. Exit codes: `0` scaffolded · `1` usage
-or refused-overwrite · `2` profile not found.
+path overwrites nothing and writes no backups. A template name that doesn't resolve
+exits `2` and lists the available templates — create one with `cprof init --template
+<name>`. Exit codes: `0` scaffolded · `1` usage or refused-overwrite · `2` not found.
 
 ## `cprof rollback`
 

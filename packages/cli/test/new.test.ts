@@ -59,6 +59,17 @@ function projectProfile(): unknown {
 
 const profile = (): string => join(profileDir, "claude-profile.json");
 
+async function writeTemplate(name: string): Promise<void> {
+  const dir = join(homeDir, ".cprof", "templates", name);
+  await mkdir(join(dir, "commands"), { recursive: true });
+  await writeFile(join(dir, "commands", "deploy.md"), "Deploy\n", "utf8");
+  await writeFile(
+    join(dir, "claude-profile.json"),
+    `${JSON.stringify(projectProfile(), null, 2)}\n`,
+    "utf8",
+  );
+}
+
 describe("cprof new", () => {
   it("scaffolds into the current directory when no dir is given", async () => {
     await writeAsset("commands/deploy.md", "Deploy\n");
@@ -179,5 +190,57 @@ describe("cprof new", () => {
     await expect(
       readFile(join(dest, ".claude", "commands", "deploy.md"), "utf8"),
     ).resolves.toBe("Old\n");
+  });
+
+  it("scaffolds from a named template under ~/.cprof/templates", async () => {
+    await writeTemplate("react-app");
+    const dest = join(tempDir, "my-app");
+
+    await expect(
+      main(["new", "react-app", dest], { cwd: tempDir, homeDir }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(dest, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("Deploy\n");
+  });
+
+  it("returns 2 and lists templates when a name is not found", async () => {
+    await writeTemplate("react-app");
+    const stderr = createWritable();
+
+    await expect(
+      main(["new", "nope", join(tempDir, "x")], {
+        cwd: tempDir,
+        homeDir,
+        stderr,
+      }),
+    ).resolves.toBe(2);
+
+    expect(stderr.output).toMatch(/not found/i);
+    expect(stderr.output).toContain("react-app");
+  });
+
+  it("lists available templates with --list", async () => {
+    await writeTemplate("react-app");
+    await writeTemplate("node-svc");
+    const stdout = createWritable();
+
+    await expect(
+      main(["new", "--list"], { cwd: tempDir, homeDir, stdout }),
+    ).resolves.toBe(0);
+
+    expect(stdout.output).toContain("react-app");
+    expect(stdout.output).toContain("node-svc");
+  });
+
+  it("prints a friendly note when --list finds no templates", async () => {
+    const stdout = createWritable();
+
+    await expect(
+      main(["new", "--list"], { cwd: tempDir, homeDir, stdout }),
+    ).resolves.toBe(0);
+
+    expect(stdout.output).toMatch(/no templates/i);
   });
 });
