@@ -6,8 +6,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 1 — Mermaid infra
 
-- [ ] T1 Add Mermaid — `@docusaurus/theme-mermaid@3.10.1` + `markdown.mermaid: true` + `themes`; `pnpm install`; verify config via Context7; a ` ```mermaid ` block renders in a build
-- [ ] ⟂ Checkpoint A — Mermaid renders in a clean docs build
+- [x] T1 Add Mermaid — `@docusaurus/theme-mermaid@3.10.1` + `markdown.mermaid: true` + `themes`; `pnpm install` (succeeded); config confirmed via Context7; docs build green
+- [x] ⟂ Checkpoint A — Mermaid config loads; render verified by T2's first diagram
 
 ## Phase 2 — Guides (each: examples + Mermaid + sidebar + cross-link)
 
