@@ -1,5 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 
 import {
   createProfileGitignore,
@@ -60,6 +60,12 @@ export function emitJson(
 export interface FinalizeProfileWriteInput {
   readonly command: string;
   readonly cwd: string;
+  /** Directory to write the profile bundle into. Defaults to `cwd`. */
+  readonly outDir?: string;
+  /** Write the `.gitignore` helper alongside the profile. Defaults to true. */
+  readonly writeGitignore?: boolean;
+  /** Write the `cprof-scan-report.txt` helper. Defaults to true. */
+  readonly writeReport?: boolean;
   readonly scan: ScanClaudeProfileResult;
   readonly json: boolean;
   readonly quiet: boolean;
@@ -80,6 +86,7 @@ export async function finalizeProfileWrite(
   input: FinalizeProfileWriteInput,
 ): Promise<number> {
   const { command, cwd, scan, json, stdout, stderr } = input;
+  const outDir = input.outDir ?? cwd;
   const { manifest, leakCheck } = scan;
   const validation = validateProfile(manifest);
 
@@ -106,21 +113,32 @@ export async function finalizeProfileWrite(
     return 3;
   }
 
+  await mkdir(outDir, { recursive: true });
   await writeFile(
-    join(cwd, "claude-profile.json"),
+    join(outDir, "claude-profile.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
     "utf8",
   );
-  await writeFile(join(cwd, ".gitignore"), createProfileGitignore(), "utf8");
-  await writeFile(
-    join(cwd, "cprof-scan-report.txt"),
-    createScanReport(scan.report),
-    "utf8",
-  );
+  if (input.writeGitignore !== false) {
+    await writeFile(
+      join(outDir, ".gitignore"),
+      createProfileGitignore(),
+      "utf8",
+    );
+  }
+  if (input.writeReport !== false) {
+    await writeFile(
+      join(outDir, "cprof-scan-report.txt"),
+      createScanReport(scan.report),
+      "utf8",
+    );
+  }
 
   if (json) {
     emitJson(stdout, command, true, {
-      profilePath: "claude-profile.json",
+      profilePath:
+        relative(cwd, join(outDir, "claude-profile.json")) ||
+        "claude-profile.json",
       profileScope: manifest.profileScope,
       includesGlobal: manifest.includesGlobal,
       leakCheck: { ok: true, leaks: [] },

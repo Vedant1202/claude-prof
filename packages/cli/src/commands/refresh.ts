@@ -24,9 +24,17 @@ export async function runRefresh(
 ): Promise<number> {
   const { json, quiet, rest } = parseCommonFlags(flags);
 
-  if (rest.length > 0) {
-    options.stderr.write(`unknown refresh flag: ${rest[0]}\n`);
-    return 1;
+  let writeGitignore = true;
+  let writeReport = true;
+  for (const flag of rest) {
+    if (flag === "--no-gitignore") {
+      writeGitignore = false;
+    } else if (flag === "--no-report") {
+      writeReport = false;
+    } else {
+      options.stderr.write(`unknown refresh flag: ${flag}\n`);
+      return 1;
+    }
   }
 
   const profilePath = join(options.cwd, "claude-profile.json");
@@ -62,6 +70,8 @@ export async function runRefresh(
     scan,
     json,
     quiet,
+    writeGitignore,
+    writeReport,
     successMessage: "Refreshed claude-profile.json",
     stdout: options.stdout,
     stderr: options.stderr,

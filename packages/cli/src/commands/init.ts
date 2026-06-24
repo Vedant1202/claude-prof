@@ -24,12 +24,17 @@ export async function runInit(
     return 1;
   }
 
+  const outDir =
+    parsed.outDir !== undefined
+      ? resolve(options.cwd, parsed.outDir)
+      : options.cwd;
+
   const scan = await scanClaudeProfile({
     name: createProfileName(options.cwd, parsed.mode, parsed.includeGlobal),
     version: "1.0.0",
     cwd: options.cwd,
     homeDir: options.homeDir ?? homedir(),
-    outputRoot: options.cwd,
+    outputRoot: outDir,
     mode: parsed.mode,
     includeGlobal: parsed.mode === "project" ? parsed.includeGlobal : false,
   });
@@ -37,9 +42,12 @@ export async function runInit(
   return finalizeProfileWrite({
     command: "init",
     cwd: options.cwd,
+    outDir,
     scan,
     json,
     quiet,
+    writeGitignore: parsed.writeGitignore,
+    writeReport: parsed.writeReport,
     successMessage: `Wrote claude-profile.json (${scan.manifest.profileScope}${
       scan.manifest.includesGlobal ? " + global" : ""
     })`,
@@ -53,37 +61,75 @@ type ParsedInitFlags =
       readonly valid: true;
       readonly mode: "project";
       readonly includeGlobal: boolean;
+      readonly outDir?: string;
+      readonly writeGitignore: boolean;
+      readonly writeReport: boolean;
     }
   | {
       readonly valid: true;
       readonly mode: "global";
       readonly includeGlobal?: false;
+      readonly outDir?: string;
+      readonly writeGitignore: boolean;
+      readonly writeReport: boolean;
     }
   | { readonly valid: false; readonly error: string };
 
 function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
-  const supportedFlags = new Set(["--global", "--include-global"]);
-  const unknownFlag = flags.find((flag) => !supportedFlags.has(flag));
+  let global = false;
+  let includeGlobal = false;
+  let outDir: string | undefined;
+  let writeGitignore = true;
+  let writeReport = true;
 
-  if (unknownFlag !== undefined) {
-    return { valid: false, error: `unknown init flag: ${unknownFlag}` };
+  for (let index = 0; index < flags.length; index += 1) {
+    const flag = flags[index];
+
+    if (flag === "--global") {
+      global = true;
+    } else if (flag === "--include-global") {
+      includeGlobal = true;
+    } else if (flag === "--no-gitignore") {
+      writeGitignore = false;
+    } else if (flag === "--no-report") {
+      writeReport = false;
+    } else if (flag === "--out") {
+      const value = flags[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        return { valid: false, error: "init --out requires a directory" };
+      }
+      outDir = value;
+      index += 1;
+    } else {
+      return { valid: false, error: `unknown init flag: ${flag}` };
+    }
   }
 
-  if (flags.includes("--global") && flags.includes("--include-global")) {
+  if (global && includeGlobal) {
     return {
       valid: false,
       error: "init cannot combine --global and --include-global",
     };
   }
 
-  if (flags.includes("--global")) {
-    return { valid: true, mode: "global", includeGlobal: false };
+  if (global) {
+    return {
+      valid: true,
+      mode: "global",
+      includeGlobal: false,
+      outDir,
+      writeGitignore,
+      writeReport,
+    };
   }
 
   return {
     valid: true,
     mode: "project",
-    includeGlobal: flags.includes("--include-global"),
+    includeGlobal,
+    outDir,
+    writeGitignore,
+    writeReport,
   };
 }
 

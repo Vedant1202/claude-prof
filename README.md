@@ -102,21 +102,24 @@ Existing `${VAR}` expansions are preserved, and the generated manifest is
 
 ## Commands
 
-| Command                                                        | What it does                                                    |
-| -------------------------------------------------------------- | --------------------------------------------------------------- |
-| `cprof init [--global \| --include-global]`                    | Snapshot the current setup into `claude-profile.json`           |
-| `cprof refresh`                                                | Rebuild the profile from its recorded source scope              |
-| `cprof install <file> [--dry-run] [--force] [--global \| ...]` | Apply a trusted profile (deep merge; backs up before overwrite) |
-| `cprof new <profile> [dir] [--force]`                          | Scaffold a new project from a profile (refuses to overwrite)    |
-| `cprof rollback [--undo] [--force] [--global]`                 | Strictly undo (or `--undo` to redo) the last install            |
-| `cprof validate <file>`                                        | Validate a profile against the schema                           |
-| `cprof diff <a.json> <b.json>`                                 | Compare two profiles semantically                               |
-| `cprof scan <file...>`                                         | Scan files for secrets — a standalone leak gate for CI          |
-| `cprof profiles list`                                          | List profiles recorded by local installs                        |
-| `cprof completion <bash\|zsh\|fish>`                           | Print a shell completion script                                 |
+| Command                                                       | What it does                                                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `cprof init [--global \| --include-global] [--out <dir>]`     | Snapshot the current setup into `claude-profile.json`           |
+| `cprof refresh`                                               | Rebuild the profile from its recorded source scope              |
+| `cprof install <file> [--dry-run] [--force] [--into <dir>] …` | Apply a trusted profile (deep merge; backs up before overwrite) |
+| `cprof new <profile> [dir] [--force]`                         | Scaffold a new project from a profile (refuses to overwrite)    |
+| `cprof rollback [--undo] [--force] [--global]`                | Strictly undo (or `--undo` to redo) the last install            |
+| `cprof validate <file>`                                       | Validate a profile against the schema                           |
+| `cprof diff <a.json> <b.json>`                                | Compare two profiles semantically                               |
+| `cprof scan <file...>`                                        | Scan files for secrets — a standalone leak gate for CI          |
+| `cprof profiles list`                                         | List profiles recorded by local installs                        |
+| `cprof completion <bash\|zsh\|fish>`                          | Print a shell completion script                                 |
 
 Run `cprof --help` for the overview, or `cprof <command> --help` for one command.
-Every command accepts `--json` (machine-readable output) and `--quiet`.
+Every command accepts `--json` (machine-readable output) and `--quiet`. `init`
+writes to the current directory unless you pass `--out <dir>`; `install` targets it
+unless you pass `--into <dir>`; and both `init` and `refresh` take `--no-gitignore`
+/ `--no-report` to skip the helper files.
 
 ## How it works
 

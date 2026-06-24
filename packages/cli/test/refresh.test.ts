@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -60,6 +60,42 @@ describe("cprof refresh", () => {
     await expect(main(["refresh"], { cwd: tempDir, stderr })).resolves.toBe(2);
 
     expect(stderr.output).toContain("file not found");
+  });
+
+  it("refresh --no-gitignore skips the .gitignore but still writes the report", async () => {
+    const homeDir = join(tempDir, "home");
+    await mkdir(homeDir, { recursive: true });
+    const profile = buildManifest({
+      name: "p",
+      version: "1.0.0",
+      sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+    });
+    await writeFile(
+      join(tempDir, "claude-profile.json"),
+      `${JSON.stringify(profile, null, 2)}\n`,
+      "utf8",
+    );
+
+    await expect(
+      main(["refresh", "--no-gitignore"], { cwd: tempDir, homeDir }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(tempDir, ".gitignore"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(join(tempDir, "cprof-scan-report.txt"), "utf8"),
+    ).resolves.toBeTruthy();
+  });
+
+  it("rejects an unknown refresh flag", async () => {
+    const stderr = createWritable();
+
+    await expect(
+      main(["refresh", "--bogus"], { cwd: tempDir, stderr }),
+    ).resolves.toBe(1);
+
+    expect(stderr.output).toContain("unknown refresh flag");
   });
 });
 

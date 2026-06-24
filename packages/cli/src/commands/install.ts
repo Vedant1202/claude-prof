@@ -19,6 +19,7 @@ interface ParsedInstallFlags {
   readonly dryRun: boolean;
   readonly force: boolean;
   readonly scope?: InstallScope;
+  readonly into?: string;
 }
 
 export async function runInstall(
@@ -35,7 +36,10 @@ export async function runInstall(
 
   const result = await installProfile({
     profilePath: resolve(options.cwd, parsed.profilePath),
-    cwd: options.cwd,
+    cwd:
+      parsed.into !== undefined
+        ? resolve(options.cwd, parsed.into)
+        : options.cwd,
     homeDir: options.homeDir ?? homedir(),
     env: options.env,
     dryRun: parsed.dryRun,
@@ -82,8 +86,15 @@ function parseInstallFlags(flags: readonly string[]): ParseInstallResult {
   let dryRun = false;
   let force = false;
   let scope: InstallScope | undefined;
+  let into: string | undefined;
 
-  for (const flag of flags) {
+  for (let index = 0; index < flags.length; index += 1) {
+    const flag = flags[index];
+
+    if (flag === undefined) {
+      continue;
+    }
+
     if (flag === "--dry-run") {
       dryRun = true;
       continue;
@@ -101,6 +112,16 @@ function parseInstallFlags(flags: readonly string[]): ParseInstallResult {
 
     if (flag === "--include-global") {
       scope = "include-global";
+      continue;
+    }
+
+    if (flag === "--into") {
+      const value = flags[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        return { valid: false, error: "install --into requires a directory" };
+      }
+      into = value;
+      index += 1;
       continue;
     }
 
@@ -132,5 +153,6 @@ function parseInstallFlags(flags: readonly string[]): ParseInstallResult {
     dryRun,
     force,
     scope,
+    into,
   };
 }
