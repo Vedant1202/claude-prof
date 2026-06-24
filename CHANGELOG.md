@@ -2,6 +2,27 @@
 
 All notable changes to cprof are documented here.
 
+## 0.0.2-alpha.0 (2026-06-24)
+
+### Features
+
+- live diff — cprof diff <profile> vs the current machine (#15) (bf20971)
+- named local templates (cprof new <name> / --list, init --template) (#14) (99e7536)
+- init --out / install --into / --no-gitignore|--no-report (#12) (3cd9b03)
+- cprof new — scaffold a project from a profile (#13) (f5c843c)
+- cprof rollback [--undo] + install ledger v2 (#11) (bfab87a)
+
+### Bug Fixes
+
+- force LF line endings via .gitattributes (e9ff735)
+
+### Documentation
+
+- 0.0.2-alpha guides (Mermaid) + community health files (#16) (ef50a7b)
+- add 0.0.1-alpha handover document (#8) (80757f2)
+- drop decorative emojis from the intro bullets (60cb520)
+- complete documentation site (T2–T7) (#7) (f6d1e99)
+
 ## 0.0.1-alpha.0 (2026-06-21)
 
 ### Features
