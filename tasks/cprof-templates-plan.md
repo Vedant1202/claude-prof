@@ -45,7 +45,7 @@ Order: **T1 → T2 → T3** (single thread, off `dev`).
   `scan.outputRoot` + `finalizeProfileWrite`.
 - Both commands take an injectable `homeDir` → templates dir = `homeDir/.cprof/templates`.
 - Test harness: `main(argv, { cwd, homeDir })`; `new.test.ts` already has a `projectProfile()`
-  + `writeAsset`/`writeProfile` helpers to copy.
+  - `writeAsset`/`writeProfile` helpers to copy.
 
 ## Task list
 
@@ -121,12 +121,12 @@ sections), emphasizing that template creation is explicit.
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Name/path ambiguity (a name that's also a local dir) | Low | Explicit-path rule + template precedence for bare names; `--list`; documented. |
-| Templates dir absent | Low | `--list` says "none yet"; `new <name>` not-found points at `init --template`. |
-| `--template` vs `--out` collision | Low | Mutually exclusive with a clear error. |
-| Scope creep into `packages/core` | Low | None expected; Checkpoint Final asserts zero core/schema diff. |
+| Risk                                                 | Impact | Mitigation                                                                     |
+| ---------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| Name/path ambiguity (a name that's also a local dir) | Low    | Explicit-path rule + template precedence for bare names; `--list`; documented. |
+| Templates dir absent                                 | Low    | `--list` says "none yet"; `new <name>` not-found points at `init --template`.  |
+| `--template` vs `--out` collision                    | Low    | Mutually exclusive with a clear error.                                         |
+| Scope creep into `packages/core`                     | Low    | None expected; Checkpoint Final asserts zero core/schema diff.                 |
 
 ## Open questions
 

@@ -107,7 +107,7 @@ Existing `${VAR}` expansions are preserved, and the generated manifest is
 | `cprof init [--global \| --include-global] [--out <dir>]`     | Snapshot the current setup into `claude-profile.json`           |
 | `cprof refresh`                                               | Rebuild the profile from its recorded source scope              |
 | `cprof install <file> [--dry-run] [--force] [--into <dir>] …` | Apply a trusted profile (deep merge; backs up before overwrite) |
-| `cprof new <profile> [dir] [--force]`                         | Scaffold a new project from a profile (refuses to overwrite)    |
+| `cprof new <profile\|name> [dir] [--force]`                   | Scaffold a project from a profile or named template             |
 | `cprof rollback [--undo] [--force] [--global]`                | Strictly undo (or `--undo` to redo) the last install            |
 | `cprof validate <file>`                                       | Validate a profile against the schema                           |
 | `cprof diff <a.json> <b.json>`                                | Compare two profiles semantically                               |
@@ -120,6 +120,10 @@ Every command accepts `--json` (machine-readable output) and `--quiet`. `init`
 writes to the current directory unless you pass `--out <dir>`; `install` targets it
 unless you pass `--into <dir>`; and both `init` and `refresh` take `--no-gitignore`
 / `--no-report` to skip the helper files.
+
+**Named templates:** save a setup with `cprof init --template <name>` (writes to
+`~/.cprof/templates/<name>`), then scaffold by name with `cprof new <name>`, or list
+them with `cprof new --list`.
 
 ## How it works
 
