@@ -29,17 +29,17 @@ describe("cprof init --out", () => {
   it("writes the bundle to a chosen directory, creating it if missing", async () => {
     const outDir = join(cwd, "bundle");
 
-    await expect(main(["init", "--out", "bundle"], { cwd, homeDir })).resolves.toBe(
-      0,
-    );
+    await expect(
+      main(["init", "--out", "bundle"], { cwd, homeDir }),
+    ).resolves.toBe(0);
 
     const profile = JSON.parse(
       await readFile(join(outDir, "claude-profile.json"), "utf8"),
     ) as Record<string, unknown>;
     expect(validateProfile(profile)).toMatchObject({ valid: true });
-    await expect(readFile(join(outDir, ".gitignore"), "utf8")).resolves.toContain(
-      ".claude",
-    );
+    await expect(
+      readFile(join(outDir, ".gitignore"), "utf8"),
+    ).resolves.toContain(".claude");
     await expect(
       readFile(join(outDir, "cprof-scan-report.txt"), "utf8"),
     ).resolves.toContain("cprof scan report");
@@ -58,9 +58,9 @@ describe("cprof init --out", () => {
       "utf8",
     );
 
-    await expect(main(["init", "--out", "bundle"], { cwd, homeDir })).resolves.toBe(
-      0,
-    );
+    await expect(
+      main(["init", "--out", "bundle"], { cwd, homeDir }),
+    ).resolves.toBe(0);
 
     const targetDir = join(tempDir, "target");
     await mkdir(targetDir, { recursive: true });
@@ -80,9 +80,9 @@ describe("cprof init --out", () => {
   it("rejects --out with no directory argument", async () => {
     const stderr = createWritable();
 
-    await expect(main(["init", "--out"], { cwd, homeDir, stderr })).resolves.toBe(
-      1,
-    );
+    await expect(
+      main(["init", "--out"], { cwd, homeDir, stderr }),
+    ).resolves.toBe(1);
 
     expect(stderr.output).toContain("requires a directory");
   });

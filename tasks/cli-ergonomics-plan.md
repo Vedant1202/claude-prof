@@ -6,8 +6,8 @@ Mode: **plan only — no code until approved.**
 
 ## Overview
 
-Three small, backward-compatible CLI flags that change *where* output lands and *which* helper
-files are written — nothing about *what* is captured or *how* it merges:
+Three small, backward-compatible CLI flags that change _where_ output lands and _which_ helper
+files are written — nothing about _what_ is captured or _how_ it merges:
 
 - `cprof init --out <dir>` — write the profile bundle to a chosen directory.
 - `cprof install --into <dir>` — apply a profile into a chosen project directory.
@@ -113,7 +113,7 @@ original cwd. Update the `install` registry row (`synopsis`/`usage`/`flags`).
 `FinalizeProfileWriteInput`; skip the matching write when false. Parse `--no-gitignore` /
 `--no-report` out of `rest` in `init.ts` (into the T1 token loop) and `refresh.ts` (before its
 "unknown flag" error). Update the `init` and `refresh` registry rows. **The leak-check gate is
-unconditional** — `--no-report` removes only the report *file*, never the gate.
+unconditional** — `--no-report` removes only the report _file_, never the gate.
 
 **Acceptance:**
 
@@ -145,12 +145,12 @@ help/usage is already covered by the registry edits in T1–T2.
 
 ## Risks and mitigations
 
-| Risk                                              | Impact | Mitigation                                                                          |
-| ------------------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| out-dir / `outputRoot` mismatch breaks relative `source` paths | High | The one correctness risk; covered by the round-trip "install from `--out` dir" test (T1). |
-| Value-taking flag (`--out`/`--into`) eats a positional or has no value | Med | "no value → exit 1" tests + existing positional tests; consume value by index in the loop. |
-| `--no-report` misread as disabling the secret gate | High | Explicit test: planted secret still exits 3 with nothing written (T2).               |
-| Scope creep into `@cprof/core`                     | Med    | Spec §4.6 stop-and-rescope rule; Checkpoint Final asserts no core/schema diff.       |
+| Risk                                                                   | Impact | Mitigation                                                                                 |
+| ---------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| out-dir / `outputRoot` mismatch breaks relative `source` paths         | High   | The one correctness risk; covered by the round-trip "install from `--out` dir" test (T1).  |
+| Value-taking flag (`--out`/`--into`) eats a positional or has no value | Med    | "no value → exit 1" tests + existing positional tests; consume value by index in the loop. |
+| `--no-report` misread as disabling the secret gate                     | High   | Explicit test: planted secret still exits 3 with nothing written (T2).                     |
+| Scope creep into `@cprof/core`                                         | Med    | Spec §4.6 stop-and-rescope rule; Checkpoint Final asserts no core/schema diff.             |
 
 ## Open questions
 

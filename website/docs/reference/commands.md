@@ -18,17 +18,22 @@ cprof is alpha. An unknown command prints to stderr and exits `1`.
 Snapshot the current setup into `claude-profile.json`.
 
 ```bash
-cprof init [--global | --include-global]
+cprof init [--global | --include-global] [--out <dir>] [--no-gitignore] [--no-report]
 ```
 
 - _(no flag)_ — snapshot the current **project**.
 - `--global` — snapshot your user-level setup (`~/.claude`).
 - `--include-global` — snapshot the project _and_ record global context, kept
   separate in `sources`.
+- `--out <dir>` — write the profile bundle into `<dir>` (created if missing)
+  instead of the current directory; relative `source` paths keep it portable.
+- `--no-gitignore` / `--no-report` — skip writing the `.gitignore` / the
+  `cprof-scan-report.txt` helper. Neither affects the secret leak-check, which
+  always runs before any write.
 
 Writes `claude-profile.json`, `cprof-scan-report.txt`, and a `.gitignore` into the
-current directory. Exit codes: `0` success · `1` bad flags · `3` redaction left a
-secret (nothing is written).
+output directory (the current directory by default, or `--out`). Exit codes: `0`
+success · `1` bad flags · `3` redaction left a secret (nothing is written).
 
 ## `cprof refresh`
 
@@ -37,10 +42,11 @@ hand-owned fields (`name`, `version`, `description`, `claudeCode`) and regenerat
 the captured data.
 
 ```bash
-cprof refresh
+cprof refresh [--no-gitignore] [--no-report]
 ```
 
-Takes no flags. Re-writes the same three files. Exit codes: `0` · `2` if
+Re-writes the same three files; `--no-gitignore` / `--no-report` skip the
+respective helper (the leak-check still runs). Exit codes: `0` · `2` if
 `claude-profile.json` is missing · `3` on a detected leak.
 
 ## `cprof install`
@@ -48,11 +54,14 @@ Takes no flags. Re-writes the same three files. Exit codes: `0` · `2` if
 Apply a trusted profile to the current machine with a non-destructive deep merge.
 
 ```bash
-cprof install <file> [--dry-run] [--force] [--global | --include-global]
+cprof install <file> [--dry-run] [--force] [--into <dir>] [--global | --include-global]
 ```
 
 - `--dry-run` — validate and print the write plan; write nothing, record nothing.
 - `--force` — allow overwriting existing **asset** files (each is backed up first).
+- `--into <dir>` — apply into `<dir>` instead of the current project directory (the
+  profile is still read from where you point it). `--global` content is unaffected —
+  it always targets `~/.claude`.
 - `--global` — apply only global-scoped content, to `~/.claude`.
 - `--include-global` — from a mixed profile, also apply global content (the
   default applies project content only).

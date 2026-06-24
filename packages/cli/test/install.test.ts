@@ -254,10 +254,13 @@ describe("cprof install", () => {
     const into = join(tempDir, "elsewhere");
 
     await expect(
-      main(["install", join(profileDir, "claude-profile.json"), "--into", into], {
-        cwd: targetDir,
-        homeDir,
-      }),
+      main(
+        ["install", join(profileDir, "claude-profile.json"), "--into", into],
+        {
+          cwd: targetDir,
+          homeDir,
+        },
+      ),
     ).resolves.toBe(0);
 
     await expect(
