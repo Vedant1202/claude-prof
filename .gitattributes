@@ -1,0 +1,12 @@
+# Normalize line endings to LF on every platform so `prettier --check` and other
+# tooling stay consistent. Without this, Windows CI runners check out CRLF
+# (autocrlf) and prettier (endOfLine: lf) flags every file.
+* text=auto eol=lf
+
+# Binary assets — never normalize line endings.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

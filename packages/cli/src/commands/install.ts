@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 
 import { installProfile, type InstallScope } from "@cprof/core";
 
+import { emitJson, parseCommonFlags } from "../command-utils.js";
+
 export interface InstallCommandOptions {
   readonly cwd: string;
   readonly homeDir?: string;
@@ -17,13 +19,15 @@ interface ParsedInstallFlags {
   readonly dryRun: boolean;
   readonly force: boolean;
   readonly scope?: InstallScope;
+  readonly into?: string;
 }
 
 export async function runInstall(
   flags: readonly string[],
   options: InstallCommandOptions,
 ): Promise<number> {
-  const parsed = parseInstallFlags(flags);
+  const { json, quiet, rest } = parseCommonFlags(flags);
+  const parsed = parseInstallFlags(rest);
 
   if (parsed.valid === false) {
     options.stderr.write(`${parsed.error}\n`);
@@ -32,7 +36,10 @@ export async function runInstall(
 
   const result = await installProfile({
     profilePath: resolve(options.cwd, parsed.profilePath),
-    cwd: options.cwd,
+    cwd:
+      parsed.into !== undefined
+        ? resolve(options.cwd, parsed.into)
+        : options.cwd,
     homeDir: options.homeDir ?? homedir(),
     env: options.env,
     dryRun: parsed.dryRun,
@@ -41,10 +48,27 @@ export async function runInstall(
     installSource: parsed.profilePath,
   });
 
-  const output = result.ok ? options.stdout : options.stderr;
-  output.write(result.report);
+  if (json) {
+    emitJson(options.stdout, "install", result.ok, {
+      dryRun: result.dryRun,
+      writes: result.writes,
+      conflicts: result.conflicts,
+      skipped: result.skipped,
+      backups: result.backups,
+      missingSecrets: result.missingSecrets,
+      errors: result.errors,
+    });
+    return result.exitCode;
+  }
 
-  if (result.ok) {
+  if (!result.ok) {
+    // Failure report explains the error — always shown, even with --quiet.
+    options.stderr.write(result.report);
+    return result.exitCode;
+  }
+
+  if (!quiet) {
+    options.stdout.write(result.report);
     options.stdout.write(
       `${parsed.dryRun ? "Planned" : "Installed"} ${result.writes.length} writes\n`,
     );
@@ -62,8 +86,15 @@ function parseInstallFlags(flags: readonly string[]): ParseInstallResult {
   let dryRun = false;
   let force = false;
   let scope: InstallScope | undefined;
+  let into: string | undefined;
 
-  for (const flag of flags) {
+  for (let index = 0; index < flags.length; index += 1) {
+    const flag = flags[index];
+
+    if (flag === undefined) {
+      continue;
+    }
+
     if (flag === "--dry-run") {
       dryRun = true;
       continue;
@@ -81,6 +112,16 @@ function parseInstallFlags(flags: readonly string[]): ParseInstallResult {
 
     if (flag === "--include-global") {
       scope = "include-global";
+      continue;
+    }
+
+    if (flag === "--into") {
+      const value = flags[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        return { valid: false, error: "install --into requires a directory" };
+      }
+      into = value;
+      index += 1;
       continue;
     }
 
@@ -112,5 +153,6 @@ function parseInstallFlags(flags: readonly string[]): ParseInstallResult {
     dryRun,
     force,
     scope,
+    into,
   };
 }

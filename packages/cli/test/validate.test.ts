@@ -74,8 +74,23 @@ describe("cprof validate", () => {
     ).resolves.toBe(0);
 
     expect(JSON.parse(stdout.output)).toMatchObject({
-      valid: true,
-      exitCode: 0,
+      command: "validate",
+      ok: true,
+      errors: [],
+    });
+  });
+
+  it("reports ok:false in JSON for an invalid profile", async () => {
+    const stdout = createWritable();
+    await writeProfile("invalid.json", { name: "invalid" });
+
+    await expect(
+      main(["validate", "--json", "invalid.json"], { cwd: tempDir, stdout }),
+    ).resolves.toBe(1);
+
+    expect(JSON.parse(stdout.output)).toMatchObject({
+      command: "validate",
+      ok: false,
     });
   });
 });

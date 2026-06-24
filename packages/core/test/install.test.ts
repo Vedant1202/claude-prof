@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildManifest } from "../src/manifest.js";
 import { createProfileSourceMetadata } from "../src/sources.js";
 import { installProfile } from "../src/install.js";
+import { loadInstalledProfileState } from "../src/state.js";
 
 let tempDir: string;
 let profileDir: string;
@@ -66,6 +67,39 @@ describe("installProfile", () => {
         "utf8",
       ),
     ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("records v2 provenance in the ledger (status, writes with hashes, backupDir)", async () => {
+    await writeAsset("commands/deploy.md", "Deploy\n");
+    await writeProfile(
+      buildManifest({
+        name: "project",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        commands: {
+          deploy: { source: "./commands/deploy.md", scope: "project" },
+        },
+      }),
+    );
+
+    await installProfile({
+      profilePath: join(profileDir, "claude-profile.json"),
+      cwd: targetDir,
+      homeDir,
+      now: new Date("2026-06-01T00:00:00.000Z"),
+    });
+
+    const state = await loadInstalledProfileState(
+      join(targetDir, ".cprof-state.json"),
+    );
+    const record = state.installs[0];
+    expect(record?.status).toBe("applied");
+    expect(record?.backupDir).toContain(".cprof-backups");
+    const created = record?.writes?.find((write) =>
+      write.path.endsWith("deploy.md"),
+    );
+    expect(created?.action).toBe("created");
+    expect(created?.hash).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 
   it("installs project assets and writes an install report", async () => {

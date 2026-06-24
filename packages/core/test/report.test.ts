@@ -8,6 +8,13 @@ describe("createProfileGitignore", () => {
     expect(createProfileGitignore()).toContain(".claude/transcripts/");
     expect(createProfileGitignore()).toContain(".claude/history.jsonl");
   });
+
+  it("excludes cprof's own install/rollback state", () => {
+    const gitignore = createProfileGitignore();
+    expect(gitignore).toContain(".cprof-backups/");
+    expect(gitignore).toContain(".cprof-trash/");
+    expect(gitignore).toContain(".cprof-state.json");
+  });
 });
 
 describe("createScanReport", () => {

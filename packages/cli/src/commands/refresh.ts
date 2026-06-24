@@ -1,15 +1,15 @@
-import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import {
-  createProfileGitignore,
-  createScanReport,
-  scanClaudeProfile,
-  validateProfile,
-} from "@cprof/core";
+import { scanClaudeProfile } from "@cprof/core";
 
-import { readProfileFile, type CommandWriter } from "../command-utils.js";
+import {
+  emitJson,
+  finalizeProfileWrite,
+  parseCommonFlags,
+  readProfileFile,
+  type CommandWriter,
+} from "../command-utils.js";
 
 export interface RefreshCommandOptions {
   readonly cwd: string;
@@ -22,16 +22,30 @@ export async function runRefresh(
   flags: readonly string[],
   options: RefreshCommandOptions,
 ): Promise<number> {
-  if (flags.length > 0) {
-    options.stderr.write(`unknown refresh flag: ${flags[0]}\n`);
-    return 1;
+  const { json, quiet, rest } = parseCommonFlags(flags);
+
+  let writeGitignore = true;
+  let writeReport = true;
+  for (const flag of rest) {
+    if (flag === "--no-gitignore") {
+      writeGitignore = false;
+    } else if (flag === "--no-report") {
+      writeReport = false;
+    } else {
+      options.stderr.write(`unknown refresh flag: ${flag}\n`);
+      return 1;
+    }
   }
 
   const profilePath = join(options.cwd, "claude-profile.json");
   const existing = await readProfileFile(profilePath);
 
   if (!existing.ok) {
-    options.stderr.write(`${existing.errors.join("\n")}\n`);
+    if (json) {
+      emitJson(options.stdout, "refresh", false, { errors: existing.errors });
+    } else {
+      options.stderr.write(`${existing.errors.join("\n")}\n`);
+    }
     return existing.exitCode;
   }
 
@@ -49,40 +63,17 @@ export async function runRefresh(
         ? existing.profile.includesGlobal
         : false,
   });
-  const refreshed = scan.manifest;
-  const validation = validateProfile(refreshed);
 
-  if (!validation.valid) {
-    options.stderr.write(`${validation.errors.join("\n")}\n`);
-    return validation.exitCode;
-  }
-
-  if (!scan.leakCheck.ok) {
-    const leakedPaths = [
-      ...new Set(scan.leakCheck.leaks.map((leak) => leak.path)),
-    ];
-    options.stderr.write(
-      `refusing to write: redaction left a secret in ${leakedPaths.join(", ")}\n`,
-    );
-    return 3;
-  }
-
-  await writeFile(
-    profilePath,
-    `${JSON.stringify(refreshed, null, 2)}\n`,
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, ".gitignore"),
-    createProfileGitignore(),
-    "utf8",
-  );
-  await writeFile(
-    join(options.cwd, "cprof-scan-report.txt"),
-    createScanReport(scan.report),
-    "utf8",
-  );
-
-  options.stdout.write("Refreshed claude-profile.json\n");
-  return 0;
+  return finalizeProfileWrite({
+    command: "refresh",
+    cwd: options.cwd,
+    scan,
+    json,
+    quiet,
+    writeGitignore,
+    writeReport,
+    successMessage: "Refreshed claude-profile.json",
+    stdout: options.stdout,
+    stderr: options.stderr,
+  });
 }

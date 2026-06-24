@@ -238,6 +238,93 @@ describe("cprof install", () => {
       code: "ENOENT",
     });
   });
+
+  it("applies into the directory named by --into", async () => {
+    await writeAsset("commands/deploy.md", "Deploy\n");
+    await writeProfile(
+      buildManifest({
+        name: "project",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "project" }),
+        commands: {
+          deploy: { source: "./commands/deploy.md", scope: "project" },
+        },
+      }),
+    );
+    const into = join(tempDir, "elsewhere");
+
+    await expect(
+      main(
+        ["install", join(profileDir, "claude-profile.json"), "--into", into],
+        {
+          cwd: targetDir,
+          homeDir,
+        },
+      ),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(into, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("Deploy\n");
+    // The current directory is left untouched.
+    await expect(
+      readFile(join(targetDir, ".claude", "commands", "deploy.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    // The install ledger lands under the chosen target root.
+    await expect(
+      readFile(join(into, ".cprof-state.json"), "utf8"),
+    ).resolves.toBeTruthy();
+  });
+
+  it("does not let --into affect --global writes", async () => {
+    await writeAsset("commands/global.md", "Global\n");
+    await writeProfile(
+      buildManifest({
+        name: "global",
+        version: "1.0.0",
+        sourceMetadata: createProfileSourceMetadata({ mode: "global" }),
+        commands: {
+          global: { source: "./commands/global.md", scope: "global" },
+        },
+      }),
+    );
+    const into = join(tempDir, "elsewhere");
+
+    await expect(
+      main(
+        [
+          "install",
+          join(profileDir, "claude-profile.json"),
+          "--global",
+          "--into",
+          into,
+        ],
+        { cwd: targetDir, homeDir },
+      ),
+    ).resolves.toBe(0);
+
+    // Global entries still target ~/.claude (homeDir), never --into.
+    await expect(
+      readFile(join(homeDir, ".claude", "commands", "global.md"), "utf8"),
+    ).resolves.toBe("Global\n");
+    await expect(
+      readFile(join(into, ".claude", "commands", "global.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects --into with no directory argument", async () => {
+    const stderr = createWritable();
+
+    await expect(
+      main(["install", "profile.json", "--into"], {
+        cwd: targetDir,
+        homeDir,
+        stderr,
+      }),
+    ).resolves.toBe(1);
+
+    expect(stderr.output).toContain("requires a directory");
+  });
 });
 
 async function writeAsset(path: string, contents: string): Promise<void> {

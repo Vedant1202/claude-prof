@@ -13,7 +13,14 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Guides",
-      items: ["guides/migrate"],
+      items: [
+        "guides/migrate",
+        "guides/scaffold",
+        "guides/rollback",
+        "guides/drift",
+        "guides/output-locations",
+        "guides/scanning",
+      ],
     },
     {
       type: "category",

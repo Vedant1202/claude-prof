@@ -26,14 +26,15 @@ them hold secrets. Moving that setup to a new machine, sharing it with a
 teammate, or just keeping it under version control means hand-copying files and
 hoping you didn't leak an API key.
 
-`cprof` turns that setup into a single, portable, **secret-redacted**
-`claude-profile.json` you can carry, diff, and re-apply anywhere:
+`cprof` turns that setup into a portable, **secret-redacted** profile — a
+`claude-profile.json` manifest plus the asset files it references — that you can
+carry, diff, and re-apply anywhere:
 
-- 📸 **Snapshot** — capture your project or global Claude Code config into one
-  deterministic, schema-valid file.
-- 🧼 **Scrub** — secrets are redacted to `${env:NAME}` placeholders on the way
-  out, and the result is re-scanned before it's written.
-- 🚚 **Migrate** — apply a trusted profile onto another machine with a
+- **Snapshot** — capture your project or global Claude Code config into a
+  deterministic, schema-valid profile.
+- **Scrub** — secrets are redacted to `${env:NAME}` placeholders on the way out,
+  and the result is re-scanned before it's written.
+- **Migrate** — apply a trusted profile onto another machine with a
   non-destructive deep merge (with dry-run and backups).
 
 It is **local-first**: profiles are files you produce and carry yourself. cprof
@@ -78,8 +79,8 @@ From your project or `~/.claude` setup:
 - **Skills, commands, and agents** (subagents)
 - **Hook and plugin inventory** (recorded, never executed)
 
-Everything lands in a single `claude-profile.json` that validates against a
-published JSON Schema.
+The `claude-profile.json` manifest validates against a published JSON Schema; the
+captured skills, commands, agents, and memory live alongside it as referenced files.
 
 ## Redaction & its limits
 
@@ -102,16 +103,28 @@ Existing `${VAR}` expansions are preserved, and the generated manifest is
 
 ## Commands
 
-| Command                                                        | What it does                                                    |
-| -------------------------------------------------------------- | --------------------------------------------------------------- |
-| `cprof init [--global \| --include-global]`                    | Snapshot the current setup into `claude-profile.json`           |
-| `cprof refresh`                                                | Rebuild the profile from its recorded source scope              |
-| `cprof install <file> [--dry-run] [--force] [--global \| ...]` | Apply a trusted profile (deep merge; backs up before overwrite) |
-| `cprof validate <file>`                                        | Validate a profile against the schema                           |
-| `cprof diff <a.json> <b.json>`                                 | Compare two profiles semantically                               |
-| `cprof profiles list`                                          | List profiles recorded by local installs                        |
+| Command                                                       | What it does                                                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `cprof init [--global \| --include-global] [--out <dir>]`     | Snapshot the current setup into `claude-profile.json`           |
+| `cprof refresh`                                               | Rebuild the profile from its recorded source scope              |
+| `cprof install <file> [--dry-run] [--force] [--into <dir>] …` | Apply a trusted profile (deep merge; backs up before overwrite) |
+| `cprof new <profile\|name> [dir] [--force]`                   | Scaffold a project from a profile or named template             |
+| `cprof rollback [--undo] [--force] [--global]`                | Strictly undo (or `--undo` to redo) the last install            |
+| `cprof validate <file>`                                       | Validate a profile against the schema                           |
+| `cprof diff <profile> \| <a.json> <b.json>`                   | Diff a profile vs the live machine, or two profiles             |
+| `cprof scan <file...>`                                        | Scan files for secrets — a standalone leak gate for CI          |
+| `cprof profiles list`                                         | List profiles recorded by local installs                        |
+| `cprof completion <bash\|zsh\|fish>`                          | Print a shell completion script                                 |
 
-Run `cprof --help` for full usage.
+Run `cprof --help` for the overview, or `cprof <command> --help` for one command.
+Every command accepts `--json` (machine-readable output) and `--quiet`. `init`
+writes to the current directory unless you pass `--out <dir>`; `install` targets it
+unless you pass `--into <dir>`; and both `init` and `refresh` take `--no-gitignore`
+/ `--no-report` to skip the helper files.
+
+**Named templates:** save a setup with `cprof init --template <name>` (writes to
+`~/.cprof/templates/<name>`), then scaffold by name with `cprof new <name>`, or list
+them with `cprof new --list`.
 
 ## How it works
 
