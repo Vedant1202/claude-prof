@@ -11,8 +11,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 2 — Producer
 
-- [ ] T2 `init --template <name>` (explicit) — `outDir = homeDir/.cprof/templates/<name>`; mutually exclusive with `--out`; reuse `--out` threading; registry `init` row; `init.test.ts` + round-trip (`init --template foo` → `new foo <dir>`)
-- [ ] ⟂ Checkpoint B — explicit save; round-trips with `new`; suite + build green
+- [x] T2 `init --template <name>` (explicit) — `outDir = homeDir/.cprof/templates/<name>`; mutually exclusive with `--out`; reuse `--out` threading; registry `init` row; `init.test.ts` + round-trip (`init --template foo` → `new foo <dir>`)
+- [x] ⟂ Checkpoint B — explicit save; round-trips with `new`; suite (101) + build green
 
 ## Phase 3 — Docs
 

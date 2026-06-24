@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -193,5 +193,77 @@ describe("cprof init side-file opt-outs", () => {
     await expect(
       readFile(join(cwd, "claude-profile.json"), "utf8"),
     ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+});
+
+describe("cprof init --template", () => {
+  async function seedProject(): Promise<void> {
+    await mkdir(join(cwd, ".claude", "commands"), { recursive: true });
+    await writeFile(
+      join(cwd, ".claude", "commands", "deploy.md"),
+      "Deploy\n",
+      "utf8",
+    );
+  }
+
+  it("saves the current setup as a named template under ~/.cprof/templates", async () => {
+    await seedProject();
+
+    await expect(
+      main(["init", "--template", "react-app"], { cwd, homeDir }),
+    ).resolves.toBe(0);
+
+    const profile = JSON.parse(
+      await readFile(
+        join(
+          homeDir,
+          ".cprof",
+          "templates",
+          "react-app",
+          "claude-profile.json",
+        ),
+        "utf8",
+      ),
+    ) as Record<string, unknown>;
+    expect(validateProfile(profile)).toMatchObject({ valid: true });
+  });
+
+  it("creates no template unless --template is passed (explicit only)", async () => {
+    await expect(main(["init"], { cwd, homeDir })).resolves.toBe(0);
+
+    await expect(stat(join(homeDir, ".cprof"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
+
+  it("rejects combining --template with --out", async () => {
+    const stderr = createWritable();
+
+    await expect(
+      main(["init", "--template", "foo", "--out", "x"], {
+        cwd,
+        homeDir,
+        stderr,
+      }),
+    ).resolves.toBe(1);
+
+    expect(stderr.output).toMatch(/cannot combine/i);
+  });
+
+  it("round-trips: init --template then new <name> scaffolds it", async () => {
+    await seedProject();
+
+    await expect(
+      main(["init", "--template", "react-app"], { cwd, homeDir }),
+    ).resolves.toBe(0);
+
+    const dest = join(tempDir, "my-app");
+    await expect(
+      main(["new", "react-app", dest], { cwd: tempDir, homeDir }),
+    ).resolves.toBe(0);
+
+    await expect(
+      readFile(join(dest, ".claude", "commands", "deploy.md"), "utf8"),
+    ).resolves.toBe("Deploy\n");
   });
 });

@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { basename, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 
 import { scanClaudeProfile } from "@cprof/core";
 
@@ -24,16 +24,19 @@ export async function runInit(
     return 1;
   }
 
+  const homeDir = options.homeDir ?? homedir();
   const outDir =
-    parsed.outDir !== undefined
-      ? resolve(options.cwd, parsed.outDir)
-      : options.cwd;
+    parsed.template !== undefined
+      ? join(homeDir, ".cprof", "templates", parsed.template)
+      : parsed.outDir !== undefined
+        ? resolve(options.cwd, parsed.outDir)
+        : options.cwd;
 
   const scan = await scanClaudeProfile({
     name: createProfileName(options.cwd, parsed.mode, parsed.includeGlobal),
     version: "1.0.0",
     cwd: options.cwd,
-    homeDir: options.homeDir ?? homedir(),
+    homeDir,
     outputRoot: outDir,
     mode: parsed.mode,
     includeGlobal: parsed.mode === "project" ? parsed.includeGlobal : false,
@@ -62,6 +65,7 @@ type ParsedInitFlags =
       readonly mode: "project";
       readonly includeGlobal: boolean;
       readonly outDir?: string;
+      readonly template?: string;
       readonly writeGitignore: boolean;
       readonly writeReport: boolean;
     }
@@ -70,6 +74,7 @@ type ParsedInitFlags =
       readonly mode: "global";
       readonly includeGlobal?: false;
       readonly outDir?: string;
+      readonly template?: string;
       readonly writeGitignore: boolean;
       readonly writeReport: boolean;
     }
@@ -79,6 +84,7 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
   let global = false;
   let includeGlobal = false;
   let outDir: string | undefined;
+  let template: string | undefined;
   let writeGitignore = true;
   let writeReport = true;
 
@@ -93,6 +99,13 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
       writeGitignore = false;
     } else if (flag === "--no-report") {
       writeReport = false;
+    } else if (flag === "--template") {
+      const value = flags[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        return { valid: false, error: "init --template requires a name" };
+      }
+      template = value;
+      index += 1;
     } else if (flag === "--out") {
       const value = flags[index + 1];
       if (value === undefined || value.startsWith("--")) {
@@ -112,12 +125,20 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
     };
   }
 
+  if (template !== undefined && outDir !== undefined) {
+    return {
+      valid: false,
+      error: "init cannot combine --template and --out",
+    };
+  }
+
   if (global) {
     return {
       valid: true,
       mode: "global",
       includeGlobal: false,
       outDir,
+      template,
       writeGitignore,
       writeReport,
     };
@@ -128,6 +149,7 @@ function parseInitFlags(flags: readonly string[]): ParsedInitFlags {
     mode: "project",
     includeGlobal,
     outDir,
+    template,
     writeGitignore,
     writeReport,
   };
