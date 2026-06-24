@@ -8,6 +8,7 @@ describe("command registry", () => {
       "init",
       "refresh",
       "install",
+      "new",
       "rollback",
       "validate",
       "diff",
