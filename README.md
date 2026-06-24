@@ -26,11 +26,12 @@ them hold secrets. Moving that setup to a new machine, sharing it with a
 teammate, or just keeping it under version control means hand-copying files and
 hoping you didn't leak an API key.
 
-`cprof` turns that setup into a single, portable, **secret-redacted**
-`claude-profile.json` you can carry, diff, and re-apply anywhere:
+`cprof` turns that setup into a portable, **secret-redacted** profile — a
+`claude-profile.json` manifest plus the asset files it references — that you can
+carry, diff, and re-apply anywhere:
 
-- **Snapshot** — capture your project or global Claude Code config into one
-  deterministic, schema-valid file.
+- **Snapshot** — capture your project or global Claude Code config into a
+  deterministic, schema-valid profile.
 - **Scrub** — secrets are redacted to `${env:NAME}` placeholders on the way out,
   and the result is re-scanned before it's written.
 - **Migrate** — apply a trusted profile onto another machine with a
@@ -78,8 +79,8 @@ From your project or `~/.claude` setup:
 - **Skills, commands, and agents** (subagents)
 - **Hook and plugin inventory** (recorded, never executed)
 
-Everything lands in a single `claude-profile.json` that validates against a
-published JSON Schema.
+The `claude-profile.json` manifest validates against a published JSON Schema; the
+captured skills, commands, agents, and memory live alongside it as referenced files.
 
 ## Redaction & its limits
 

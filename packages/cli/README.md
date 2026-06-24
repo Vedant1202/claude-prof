@@ -10,10 +10,11 @@ Snapshot, scrub, and migrate your Claude Code setup as a redacted, portable prof
 
 `cprof` captures your project or global Claude Code configuration — settings, MCP
 servers, `CLAUDE.md` memory, rules, skills, commands, agents, and plugin
-inventory — into a deterministic, schema-valid, **secret-redacted**
-`claude-profile.json`. You can then `diff`, `validate`, and `install` a trusted
-profile onto another machine with a non-destructive deep merge. It runs fully
-offline and never executes hook or plugin code.
+inventory — into a deterministic, schema-valid, **secret-redacted** profile (a
+`claude-profile.json` manifest plus its asset files). You can then `diff`,
+`validate`, scaffold (`new`), and `install` a trusted profile onto another machine
+with a non-destructive deep merge. It runs fully offline and never executes hook or
+plugin code.
 
 ## Install
 
@@ -42,16 +43,21 @@ cprof install claude-profile.json             # apply it
 
 ## Commands
 
-| Command                                            | What it does                                                    |
-| -------------------------------------------------- | --------------------------------------------------------------- |
-| `cprof init [--global \| --include-global]`        | Snapshot the current setup into `claude-profile.json`           |
-| `cprof refresh`                                    | Rebuild the profile from its recorded source scope              |
-| `cprof install <file> [--dry-run] [--force] [...]` | Apply a trusted profile (deep merge; backs up before overwrite) |
-| `cprof validate <file>`                            | Validate a profile against the schema                           |
-| `cprof diff <a.json> <b.json>`                     | Compare two profiles semantically                               |
-| `cprof profiles list`                              | List profiles recorded by local installs                        |
+| Command                                                           | What it does                                                    |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| `cprof init [--global \| --include-global] [--out \| --template]` | Snapshot the current setup into `claude-profile.json`           |
+| `cprof refresh`                                                   | Rebuild the profile from its recorded source scope              |
+| `cprof install <file> [--dry-run] [--force] [--into <dir>] …`     | Apply a trusted profile (deep merge; backs up before overwrite) |
+| `cprof new <profile\|name> [dir] [--force]`                       | Scaffold a project from a profile or named template             |
+| `cprof rollback [--undo] [--force] [--global]`                    | Strictly undo (or `--undo` to redo) the last install            |
+| `cprof validate <file>`                                           | Validate a profile against the schema                           |
+| `cprof diff <profile> \| <a.json> <b.json>`                       | Diff a profile vs the live machine, or two profiles             |
+| `cprof scan <file...>`                                            | Scan files for secrets — a standalone leak gate for CI          |
+| `cprof profiles list`                                             | List profiles recorded by local installs                        |
+| `cprof completion <bash\|zsh\|fish>`                              | Print a shell completion script                                 |
 
-Run `cprof --help` for the full usage.
+Run `cprof --help` for the full usage, or see the
+[documentation site](https://vedant1202.github.io/claude-prof/) for guides.
 
 ## Redaction & limits
 

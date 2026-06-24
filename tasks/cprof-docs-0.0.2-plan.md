@@ -139,13 +139,13 @@ asset bundle (the known accuracy fix).
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Mermaid / MDX parse errors (`<…>` in prose) | Med | Build after each task; keep `<…>` inside backticks/fences; Mermaid lives in fenced blocks. |
-| `theme-mermaid` version mismatch with core 3.10.1 | Low | Pin to `3.10.1`; confirm via Context7. |
-| `pnpm install` (network) for the new dep may be permission-gated | Low | Flag if blocked; the rest of the plan (the `.md` guides) can proceed and the diagrams render once the dep lands. |
-| Prettier reformats the new `.md` | Low | `format:write` before the final verify. |
-| Scope creep into release mechanics | Low | Out-of-scope is explicit; Final checkpoint asserts versions/CHANGELOG untouched. |
+| Risk                                                             | Impact | Mitigation                                                                                                       |
+| ---------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| Mermaid / MDX parse errors (`<…>` in prose)                      | Med    | Build after each task; keep `<…>` inside backticks/fences; Mermaid lives in fenced blocks.                       |
+| `theme-mermaid` version mismatch with core 3.10.1                | Low    | Pin to `3.10.1`; confirm via Context7.                                                                           |
+| `pnpm install` (network) for the new dep may be permission-gated | Low    | Flag if blocked; the rest of the plan (the `.md` guides) can proceed and the diagrams render once the dep lands. |
+| Prettier reformats the new `.md`                                 | Low    | `format:write` before the final verify.                                                                          |
+| Scope creep into release mechanics                               | Low    | Out-of-scope is explicit; Final checkpoint asserts versions/CHANGELOG untouched.                                 |
 
 ## Open questions
 

@@ -16,10 +16,10 @@ flowchart LR
   S -.->|"--into"| Sinto["chosen dir"]
 ```
 
-| Command         | Default                    | Redirect with |
-| --------------- | -------------------------- | ------------- |
-| `cprof init`    | the current directory      | `--out <dir>` |
-| `cprof install` | the current project        | `--into <dir>`|
+| Command         | Default               | Redirect with  |
+| --------------- | --------------------- | -------------- |
+| `cprof init`    | the current directory | `--out <dir>`  |
+| `cprof install` | the current project   | `--into <dir>` |
 
 ## Choose the output directory: `init --out`
 

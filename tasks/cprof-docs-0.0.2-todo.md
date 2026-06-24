@@ -19,8 +19,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 3 — Surface refresh
 
-- [ ] T6 Refresh stale pages — getting-started (thread new/templates/rollback + links), `packages/cli/README.md` command list, README "single file" accuracy fix
-- [ ] ⟂ Checkpoint Final — `corepack pnpm verify` green; guides cross-linked; versions/CHANGELOG/handover untouched; PR into `dev` (owner-run)
+- [x] T6 Refresh stale pages — getting-started "What's next" links the 4 new guides; `packages/cli/README.md` command list current (+ intro accuracy); README "single file" → manifest+bundle accuracy fix
+- [x] ⟂ Checkpoint Final — `corepack pnpm verify` green; guides cross-linked; versions/CHANGELOG/handover untouched; PR into `dev` (owner-run, pending)
 
 ## Notes / prerequisites
 
