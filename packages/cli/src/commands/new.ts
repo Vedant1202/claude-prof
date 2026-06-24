@@ -3,7 +3,11 @@ import { resolve } from "node:path";
 
 import { installProfile } from "@cprof/core";
 
-import { emitJson, parseCommonFlags, type CommandWriter } from "../command-utils.js";
+import {
+  emitJson,
+  parseCommonFlags,
+  type CommandWriter,
+} from "../command-utils.js";
 
 export interface NewCommandOptions {
   readonly cwd: string;

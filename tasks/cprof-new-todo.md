@@ -12,7 +12,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 ## Phase 2 — Docs
 
-- [ ] T3 Docs — README command table + `website/docs/reference/commands.md` (`[dir]` default cwd; refuse-to-overwrite + `--force`; no backups on clean path; reversible via `rollback`)
+- [x] T3 Docs — README command table + `website/docs/reference/commands.md` (`[dir]` default cwd; refuse-to-overwrite + `--force`; no backups on clean path; reversible via `rollback`)
 - [ ] ⟂ Checkpoint Final — `corepack pnpm verify` green; spec §7/§8; zero `core`|`schema` diff; PR into `dev` (owner-run)
 
 ## Notes / prerequisites

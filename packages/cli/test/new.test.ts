@@ -136,9 +136,9 @@ describe("cprof new", () => {
     ).resolves.toBe("New\n");
     // The overwritten file was backed up — this is what makes `new --force`
     // reversible via `cprof rollback`.
-    await expect(readdir(join(dest, ".cprof-backups"))).resolves.not.toHaveLength(
-      0,
-    );
+    await expect(
+      readdir(join(dest, ".cprof-backups")),
+    ).resolves.not.toHaveLength(0);
   });
 
   it("returns 2 when the profile is missing", async () => {

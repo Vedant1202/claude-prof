@@ -44,7 +44,7 @@ Order: **T1 → T2 → T3** (single thread, off `dev`).
 ## Grounded current state (recon, on `dev`)
 
 - `installProfile(options)` → `InstallResult { writes (InstallWrite{ path, action, backupPath? }),
-  conflicts, backups, missingSecrets, exitCode, report }`; `dryRun` plans without writing
+conflicts, backups, missingSecrets, exitCode, report }`; `dryRun` plans without writing
   ([core/install.ts](../packages/core/src/install.ts), [install-types.ts](../packages/core/src/install-types.ts)).
 - Pre-flight: `installProfile({ dryRun: true, force: true })` → `existing = writes.filter(w => w.action !== "created")`.
 - Real run: `installProfile({ dryRun: false, force: <userForce> })`.
@@ -105,7 +105,8 @@ surfaces, fix it in `new.ts`.
 
 **Description:** Document `cprof new` in the README command table and
 `website/docs/reference/commands.md` — synopsis, `[dir]` default (cwd), refuse-to-overwrite
-+ `--force`, no-backups-on-the-clean-path, and reversibility via `cprof rollback`.
+
+- `--force`, no-backups-on-the-clean-path, and reversibility via `cprof rollback`.
 
 **Acceptance:**
 
@@ -121,12 +122,12 @@ surfaces, fix it in `new.ts`.
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Pre-flight plan vs real-write race | Low | Local scaffold; `--force` gates any overwrite; real install never silently clobbers. |
-| Global-only profile → 0 project writes | Low | Clear "nothing to scaffold (no project content)" message; exit 0. |
-| Double plan computation (dry-run + real) | Low | Acceptable for a one-shot scaffold; keeps the engine the single source of truth. |
-| Scope creep into `packages/core` | Med | Spec §8 stop-and-rescope; Checkpoint Final asserts zero core/schema diff. |
+| Risk                                     | Impact | Mitigation                                                                           |
+| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------ |
+| Pre-flight plan vs real-write race       | Low    | Local scaffold; `--force` gates any overwrite; real install never silently clobbers. |
+| Global-only profile → 0 project writes   | Low    | Clear "nothing to scaffold (no project content)" message; exit 0.                    |
+| Double plan computation (dry-run + real) | Low    | Acceptable for a one-shot scaffold; keeps the engine the single source of truth.     |
+| Scope creep into `packages/core`         | Med    | Spec §8 stop-and-rescope; Checkpoint Final asserts zero core/schema diff.            |
 
 ## Open questions
 
