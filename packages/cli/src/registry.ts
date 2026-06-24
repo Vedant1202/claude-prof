@@ -3,6 +3,7 @@ import { runDiff } from "./commands/diff.js";
 import { runHelp } from "./commands/help.js";
 import { runInit } from "./commands/init.js";
 import { runInstall } from "./commands/install.js";
+import { runNew } from "./commands/new.js";
 import { runProfiles } from "./commands/profiles.js";
 import { runRefresh } from "./commands/refresh.js";
 import { runRollback } from "./commands/rollback.js";
@@ -126,6 +127,31 @@ export const COMMANDS: readonly Command[] = [
     ].join("\n"),
     run: (flags, context) =>
       runInstall(flags, {
+        cwd: context.cwd,
+        homeDir: context.homeDir,
+        env: context.env,
+        stdout: context.stdout,
+        stderr: context.stderr,
+      }),
+  },
+  {
+    name: "new",
+    synopsis: "new <profile> [dir] [--force]",
+    summary: "Scaffold a new project from a profile (clean copy)",
+    flags: ["--force"],
+    usage: [
+      "Usage: cprof new <profile> [dir] [--force]",
+      "",
+      "Scaffold a fresh project from a profile. Applies the profile's project-scope",
+      "content into <dir> (the current directory by default), creating it if needed.",
+      "Refuses to overwrite anything that already exists unless --force; a forced",
+      "overwrite keeps a backup, so `cprof rollback` can reverse it.",
+      "",
+      "Options:",
+      "  --force   Overwrite existing files (backed up; reversible via rollback)",
+    ].join("\n"),
+    run: (flags, context) =>
+      runNew(flags, {
         cwd: context.cwd,
         homeDir: context.homeDir,
         env: context.env,

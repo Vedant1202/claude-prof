@@ -71,6 +71,25 @@ install in `.cprof-state.json`. Each write is reported as `created`, `merged`, o
 `overwritten`. A missing required secret fails the install before any write. Exit
 code `1` on usage errors.
 
+## `cprof new`
+
+Scaffold a fresh project from a profile — a clean, one-shot copy.
+
+```bash
+cprof new <profile> [dir] [--force]
+```
+
+- `<profile>` — a local `claude-profile.json` to scaffold from.
+- `[dir]` — where to scaffold; **defaults to the current directory**, created if needed.
+- `--force` — overwrite files that already exist.
+
+Applies the profile's **project-scope** content into `[dir]`. Unlike `install` (which
+merges into an existing project), `new` **refuses to touch anything that already
+exists** and exits `1`, listing the collisions — pass `--force` to overwrite. A forced
+overwrite still keeps a backup, so `cprof rollback` can reverse a scaffold; the clean
+path overwrites nothing and writes no backups. Exit codes: `0` scaffolded · `1` usage
+or refused-overwrite · `2` profile not found.
+
 ## `cprof rollback`
 
 Strictly undo the most recent install in a scope — a transaction, not a partial
