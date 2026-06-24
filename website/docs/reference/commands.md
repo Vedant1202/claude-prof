@@ -38,6 +38,9 @@ Writes `claude-profile.json`, `cprof-scan-report.txt`, and a `.gitignore` into t
 output directory (the current directory by default, or `--out`). Exit codes: `0`
 success · `1` bad flags · `3` redaction left a secret (nothing is written).
 
+See [Output locations & helper files](../guides/output-locations.md) for `--out` /
+`--template` / `--no-*`.
+
 ## `cprof refresh`
 
 Rebuild the profile in place from the scope it recorded. Preserves your
@@ -156,6 +159,8 @@ cprof diff [--json] <a.json> <b.json>
 Drift is **not** an error: exit `0` either way (`--json` reports `equal`). `--json`
 emits the structured diff under the `{ "command": "diff", "ok", … }` envelope;
 otherwise it prints formatted text. Exit `2` if the profile is missing.
+
+See the [Track drift](../guides/drift.md) guide for using live diff to spot drift.
 
 ## `cprof scan`
 

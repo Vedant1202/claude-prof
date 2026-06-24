@@ -17,6 +17,8 @@ const sidebars: SidebarsConfig = {
         "guides/migrate",
         "guides/scaffold",
         "guides/rollback",
+        "guides/drift",
+        "guides/output-locations",
         "guides/scanning",
       ],
     },

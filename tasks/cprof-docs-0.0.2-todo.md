@@ -13,9 +13,9 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · ⟂ = checkpoint (stop 
 
 - [x] T2 Guide **Scaffold a new project** — `new` + templates (`init --template`/`new <name>`/`new --list`/`new <profile>`, refuse-overwrite + `--force`); Mermaid template-loop diagram; sidebar + reference cross-link; build green
 - [x] T3 Guide **Undo an install** — `rollback`/`--undo`, change-guard, trash, exit codes; Mermaid `applied ⇄ rolled-back` state diagram; sidebar + cross-link; build green
-- [ ] T4 Guide **Track drift** — `cprof diff <profile>` vs live (drift; vs `install --dry-run`); diagram: profile→live re-scan→diff
-- [ ] T5 Guide **Output locations & helper files** — `init --out`/`install --into`/`--no-gitignore`/`--no-report`; diagram or table for "where files go"
-- [ ] ⟂ Checkpoint B — all 4 guides build, in sidebar, cross-linked; Mermaid renders
+- [x] T4 Guide **Track drift** — `cprof diff <profile>` vs live (drift; vs `install --dry-run`); Mermaid profile→live→diff flowchart; sidebar + cross-link
+- [x] T5 Guide **Output locations & helper files** — `init --out`/`install --into`/`--no-gitignore`/`--no-report`; Mermaid redirect flowchart + a where-files-land table; sidebar + cross-link
+- [x] ⟂ Checkpoint B — all 4 guides build, in sidebar, cross-linked; Mermaid renders
 
 ## Phase 3 — Surface refresh
 
